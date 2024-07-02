@@ -416,6 +416,81 @@ const getOkd = (date) => {
     })
 }
 
+const getOkdPromo = (date) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let queryCheck = `
+                SET DateFormat DMY;
+                SELECT 
+                    COUNT(*) AS Jumlah
+                FROM 
+                    IHP_Okd_Promo a, 
+                    IHP_Inventory b 
+                WHERE 
+                    a.Inventory = b.Inventory 
+                    AND a.OrderPenjualan IN (
+                    SELECT OrderPenjualan 
+                    FROM IHP_OKL 
+                    WHERE reception IN (
+                        SELECT Reception 
+                        FROM IHP_Rcp 
+                        WHERE 
+                        CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
+                        AND Complete = '1'
+                    )
+                    );
+            `;
+
+            let query = `
+                SET DateFormat DMY;
+                SELECT 
+                    a.OrderPenjualan,
+                    b.InventoryID_Global AS Inventory,
+                    a.SlipOrder,
+                    CAST(ROUND(a.Harga_Promo, 0) AS INT) AS Harga_Promo
+                FROM 
+                    IHP_Okd_Promo a,
+                    IHP_Inventory b
+                WHERE 
+                    a.Inventory = b.Inventory 
+                    AND a.OrderPenjualan IN (
+                    SELECT OrderPenjualan 
+                    FROM IHP_OKL 
+                    WHERE reception IN (
+                        SELECT Rcp.Reception 
+                        FROM IHP_Rcp Rcp, IHP_Ivc 
+                        WHERE 
+                        CONVERT(CHAR(10), Rcp.DATE_TRANS, 120) = '${date}' 
+                        AND Complete = '1'
+                        AND Rcp.Reception = IHP_Ivc.Reception 
+                        AND Rcp.Invoice = IHP_Ivc.Invoice
+                    )
+                    )
+                ORDER BY 
+                    a.OrderPenjualan, b.Inventory ASC;
+                `;
+
+            const resultCheck = await execute(queryCheck);
+            if(resultCheck[0].jumlah < 1){
+                return
+            }
+            
+            const result = await execute(query);
+
+            resolve(result);
+            console.log(result)
+        } catch (err) {
+            console.log(`
+            Error get User
+                err: ${err}    
+                name: ${err.name}    
+                message: ${err.message}    
+                stack: ${err.stack}    
+            `);
+        }
+    })
+}
+
 module.exports = {
     getInventory,
     getRoomType,
@@ -424,5 +499,6 @@ module.exports = {
     getReservation,
     getRcp,
     getOkl,
-    getOkd
+    getOkd,
+    getOkdPromo
 }
