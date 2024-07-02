@@ -471,13 +471,237 @@ const getOkdPromo = (date) => {
                 `;
 
             const resultCheck = await execute(queryCheck);
-            if(resultCheck[0].jumlah < 1){
+            if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
                 return
             }
             
             const result = await execute(query);
 
             resolve(result);
+            console.log(result)
+        } catch (err) {
+            console.log(`
+            Error get User
+                err: ${err}    
+                name: ${err.name}    
+                message: ${err.message}    
+                stack: ${err.stack}    
+            `);
+        }
+    })
+}
+
+const getOcl = (date) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let queryCheck = `
+                SELECT 
+                    COUNT(*) AS Jumlah
+                FROM 
+                    IHP_Ocl
+                WHERE 
+                    reception IN (
+                        SELECT 
+                            Reception 
+                        FROM 
+                            IHP_Rcp 
+                        WHERE 
+                            CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
+                            AND Complete = '1'
+                    );
+            `;
+
+            let query = `
+                  SET DateFormat DMY;
+                    SELECT 
+                        IHP_Ocl.OrderCancelation,
+                        IHP_Ocl.Reception
+                    FROM 
+                        IHP_Ocl
+                    WHERE 
+                        IHP_Ocl.reception IN (
+                        SELECT 
+                            IHP_Rcp.Reception 
+                        FROM 
+                            IHP_Rcp, 
+                            IHP_Ivc
+                        WHERE 
+                            CONVERT(CHAR(10), IHP_Rcp.DATE_TRANS, 120) = '${date}'
+                            AND Complete = '1'
+                            AND IHP_Rcp.Reception = IHP_Ivc.Reception
+                            AND IHP_Rcp.Invoice = IHP_Ivc.Invoice
+                        )
+                    ORDER BY 
+                        OrderCancelation ASC;
+                `;
+
+            const resultCheck = await execute(queryCheck);
+            if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
+                return
+            }
+            
+            const result = await execute(query);
+
+            resolve(result);
+            console.log('jml '+resultCheck[0].Jumlah)
+            console.log(result)
+        } catch (err) {
+            console.log(`
+            Error get User
+                err: ${err}    
+                name: ${err.name}    
+                message: ${err.message}    
+                stack: ${err.stack}    
+            `);
+        }
+    })
+}
+
+
+const getOcd = (date) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let queryCheck = `
+              SET DateFormat DMY;
+                SELECT 
+                    COUNT(*) AS Jumlah
+                FROM 
+                    IHP_Ocd, 
+                    IHP_Inventory
+                WHERE 
+                    IHP_Ocd.Inventory = IHP_Inventory.Inventory
+                    AND IHP_Ocd.OrderCancelation IN (
+                    SELECT OrderCancelation 
+                    FROM IHP_Ocl 
+                    WHERE reception IN (
+                        SELECT Reception 
+                        FROM IHP_Rcp
+                        WHERE 
+                        CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
+                        AND Complete = '1'
+                    )
+                    );
+            `;
+
+            let query = `
+                SET DateFormat DMY;
+                SELECT 
+                    IHP_Ocd.OrderCancelation,
+                    IHP_Ocd.OrderPenjualan,
+                    IHP_Ocd.SlipOrder,
+                    CAST(IHP_Ocd.Qty AS INT) AS Qty,
+                    IHP_Inventory.InventoryID_Global AS Inventory,
+                    CAST(ROUND(IHP_Ocd.Price, 0) AS INT) AS Price
+                FROM 
+                    IHP_Ocd, 
+                    IHP_Inventory
+                WHERE 
+                    IHP_Ocd.Inventory = IHP_Inventory.Inventory
+                    AND IHP_Ocd.OrderCancelation IN (
+                    SELECT OrderCancelation 
+                    FROM IHP_Ocl 
+                    WHERE IHP_Ocl.reception IN (
+                        SELECT Rcp.Reception 
+                        FROM IHP_Rcp Rcp, IHP_Ivc
+                        WHERE 
+                        CONVERT(CHAR(10), Rcp.DATE_TRANS, 120) = '${date}'
+                        AND Complete = '1'
+                        AND Rcp.Reception = IHP_Ivc.Reception
+                        AND Rcp.Invoice = IHP_Ivc.Invoice
+                    )
+                    )
+                ORDER BY 
+                    IHP_Ocd.OrderCancelation, Inventory ASC;
+                `;
+
+            const resultCheck = await execute(queryCheck);
+            if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
+                return
+            }
+            
+            const result = await execute(query);
+
+            resolve(result);
+            console.log('jml '+resultCheck[0].Jumlah)
+            console.log(result)
+        } catch (err) {
+            console.log(`
+            Error get User
+                err: ${err}    
+                name: ${err.name}    
+                message: ${err.message}    
+                stack: ${err.stack}    
+            `);
+        }
+    })
+}
+
+
+const getOcdPromo = (date) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let queryCheck = `
+                SET DateFormat DMY;
+                SELECT 
+                    COUNT(*) AS Jumlah
+                FROM 
+                    IHP_Ocd_Promo a, 
+                    IHP_Inventory b
+                WHERE 
+                    a.Inventory = b.Inventory
+                    AND a.OrderCancelation IN (
+                    SELECT OrderCancelation 
+                    FROM IHP_Ocl 
+                    WHERE reception IN (
+                        SELECT Reception 
+                        FROM IHP_Rcp
+                        WHERE 
+                        CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
+
+                        AND Complete = '1'
+                    )
+                    );
+            `;
+
+            let query = `
+                SET DateFormat DMY;
+  SELECT 
+    a.OrderCancelation,
+    a.OrderPenjualan,
+    a.SlipOrder,
+    b.InventoryID_Global AS Inventory,
+    CAST(ROUND(a.Harga_Promo, 0) AS INT) AS Harga_Promo
+  FROM 
+    IHP_Ocd_Promo a,
+    IHP_Inventory b
+  WHERE 
+    a.Inventory = b.Inventory
+    AND a.OrderCancelation IN (
+      SELECT OrderCancelation 
+      FROM IHP_Ocl 
+      WHERE IHP_Ocl.reception IN (
+        SELECT Rcp.Reception 
+        FROM IHP_Rcp Rcp, IHP_Ivc
+        WHERE 
+            CONVERT(CHAR(10), Rcp.DATE_TRANS, 120) = '${date}'
+          AND Complete = '1'
+          AND Rcp.Reception = IHP_Ivc.Reception
+          AND Rcp.Invoice = IHP_Ivc.Invoice
+      )
+    )
+  ORDER BY 
+    a.OrderCancelation, Inventory ASC;
+                `;
+
+            const resultCheck = await execute(queryCheck);
+            if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
+                return
+            }
+            
+            const result = await execute(query);
+
+            resolve(result);
+            console.log('jml '+resultCheck[0].Jumlah)
             console.log(result)
         } catch (err) {
             console.log(`
@@ -500,5 +724,7 @@ module.exports = {
     getRcp,
     getOkl,
     getOkd,
-    getOkdPromo
+    getOkdPromo,
+    getOcl,
+    getOcd
 }
