@@ -44,7 +44,7 @@ const getInventory = (date) => {
                 Inventory ASC`;
             const dataCount = await execute(queryCheck);
             if(dataCount.count < 1){
-                return;
+                resolve([]);
             }
             console.log(queryData)
             const dataInventory = await execute(queryData);
@@ -114,7 +114,7 @@ const getRoomType = () =>{
                 Inventory ASC`;
             const dataCount = await execute(queryCheck);
             if(dataCount.count < 1){
-                return;
+                resolve([]);
             }
             console.log(queryData)
             const dataInventory = await execute(queryData);
@@ -472,7 +472,7 @@ const getOkdPromo = (date) => {
 
             const resultCheck = await execute(queryCheck);
             if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
-                return
+                resolve([])
             }
             
             const result = await execute(query);
@@ -537,7 +537,7 @@ const getOcl = (date) => {
 
             const resultCheck = await execute(queryCheck);
             if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
-                return
+                resolve([])
             }
             
             const result = await execute(query);
@@ -616,7 +616,7 @@ const getOcd = (date) => {
 
             const resultCheck = await execute(queryCheck);
             if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
-                return
+                resolve([])
             }
             
             const result = await execute(query);
@@ -692,17 +692,410 @@ const getOcdPromo = (date) => {
   ORDER BY 
     a.OrderCancelation, Inventory ASC;
                 `;
-
-            const resultCheck = await execute(queryCheck);
-            if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
-                return
-            }
-            
-            const result = await execute(query);
-
-            resolve(result);
+        console.log('1')
+        const resultCheck = await execute(queryCheck);
+        console.log('2')
+        console.log('DEBUGGING RESULT '+resultCheck[0].Jumlah)
+        if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
+            resolve([])
+        }
+        console.log('3')
+        
+        const result = await execute(query);
+        console.log('4')
+        
+        resolve(result);
+        console.log('5')
             console.log('jml '+resultCheck[0].Jumlah)
             console.log(result)
+        } catch (err) {
+            console.log(`
+            Error get User
+                err: ${err}    
+                name: ${err.name}    
+                message: ${err.message}    
+                stack: ${err.stack}    
+            `);
+        }
+    })
+}
+
+const getSul = (date) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let queryCheck = `
+                SET DateFormat DMY;
+                SELECT 
+                    COUNT(*) as Jumlah
+                FROM 
+                    IHP_Sul
+                WHERE 
+                    CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
+                    AND reception IN (
+                    SELECT Reception 
+                    FROM IHP_Rcp
+                    WHERE 
+                        CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
+                        AND Complete = '1'
+                );
+            `;
+
+            let query = `
+            SET DateFormat DMY;
+            SELECT 
+                IHP_Sul.Summary,
+                CONVERT(VARCHAR(10), IHP_Sul.date_trans, 103) AS Date,
+                IHP_Sul.Shift,
+                IHP_Sul.Reception,
+                IHP_Sul.Invoice
+            FROM 
+                IHP_Sul
+            WHERE 
+                IHP_Sul.reception IN (
+                SELECT IHP_Rcp.Reception 
+                FROM IHP_Rcp, IHP_Ivc
+                WHERE 
+                CONVERT(CHAR(10), IHP_Rcp.DATE_TRANS, 120) = '${date}'
+                    AND Complete = '1'
+                    AND IHP_Rcp.Reception = IHP_Ivc.Reception
+                    AND IHP_Rcp.Invoice = IHP_Ivc.Invoice
+                )
+                AND CONVERT(CHAR(10), IHP_Sul.DATE_TRANS, 120) = '${date}'
+            ORDER BY 
+                Summary ASC;
+                `;
+        const resultCheck = await execute(queryCheck);
+        if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
+            resolve([])
+        }
+        
+        const result = await execute(query);
+        
+        resolve(result);
+            console.log('jml '+resultCheck[0].Jumlah)
+            console.log(result)
+        } catch (err) {
+            console.log(`
+            Error get User
+                err: ${err}    
+                name: ${err.name}    
+                message: ${err.message}    
+                stack: ${err.stack}    
+            `);
+        }
+    })
+}
+
+const getSud = (date) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            console.log('1');
+            const checkZeroCash = `
+                SELECT 
+                    SUMMARY, PAY_VALUE 
+                FROM 
+                    IHP_SUD 
+                WHERE 
+                    ID_PAYMENT = 0 
+                AND 
+                    PAY_VALUE = 0 
+                AND 
+                    SUMMARY IN (
+                        SELECT 
+                            SUMMARY 
+                        FROM 
+                            IHP_SUD 
+                        GROUP BY 
+                            SUMMARY 
+                        HAVING COUNT(*) > 1
+                    )
+            `;
+
+            const zeroCashResult = await execute(checkZeroCash);
+            console.log('2');
+            if(zeroCashResult.length>0){
+                for(const cash of zeroCashResult){
+                    let deleteQuery = `
+                        DELETE FROM IHP_SUD 
+                        WHERE 
+                            ID_PAYMENT = 0 
+                        AND 
+                            PAY_VALUE = 0 
+                        AND 
+                            SUMMARY = '${cash.SUMMARY}'
+                  `;
+
+                  await execute(deleteQuery);
+                }
+            }
+
+            const checkZeroDebit = `
+                SELECT 
+                    SUMMARY, PAY_VALUE 
+                FROM 
+                    IHP_SUD 
+                WHERE 
+                    ID_PAYMENT = 1 
+                AND 
+                    PAY_VALUE = 0 
+                AND 
+                    SUMMARY IN (
+                        SELECT 
+                            SUMMARY 
+                        FROM 
+                            IHP_SUD 
+                        GROUP BY 
+                            SUMMARY 
+                        HAVING COUNT(*) > 1
+                    )
+            `;
+            console.log('3');
+            const zeroDebitResult = await execute(checkZeroDebit);
+            
+            if(zeroDebitResult.length>0){
+                for(const cash of zeroDebitResult){
+                    let deleteQuery = `
+                        DELETE FROM IHP_SUD 
+                        WHERE 
+                            ID_PAYMENT = 1 
+                        AND 
+                            PAY_VALUE = 0 
+                        AND 
+                            SUMMARY = '${cash.SUMMARY}'
+                  `;
+
+                  await execute(deleteQuery);
+                }
+            }
+            console.log('4');
+            const checkZeroCredit = `
+                SELECT 
+                    SUMMARY, PAY_VALUE 
+                FROM 
+                    IHP_SUD 
+                WHERE 
+                    ID_PAYMENT = 2 
+                AND 
+                    PAY_VALUE = 0 
+                AND 
+                    SUMMARY IN (
+                        SELECT 
+                            SUMMARY 
+                        FROM 
+                            IHP_SUD 
+                        GROUP BY 
+                            SUMMARY 
+                        HAVING COUNT(*) > 1
+                    )
+            `;
+
+            const zeroCreditResult = await execute(checkZeroCredit);
+            console.log('5');
+            if(zeroCreditResult.length>0){
+                for(const cash of zeroCreditResult){
+                    let deleteQuery = `
+                        DELETE FROM IHP_SUD 
+                        WHERE 
+                            ID_PAYMENT = 2 
+                        AND 
+                            PAY_VALUE = 0 
+                        AND 
+                            SUMMARY = '${cash.SUMMARY}'
+                  `;
+
+                  await execute(deleteQuery);
+                }
+            }
+
+            let queryCheck = `
+                SET DateFormat DMY;
+                SELECT 
+                    COUNT(*) AS Jumlah
+                FROM 
+                    IHP_Sud
+                WHERE 
+                    Summary IN (
+                    SELECT Summary 
+                    FROM IHP_Sul 
+                    WHERE 
+                    CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
+                    AND 
+                        reception IN (
+                        SELECT Reception 
+                        FROM IHP_Rcp 
+                        WHERE 
+                        CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
+                        AND Complete = '1'
+                        )
+                    )
+            `;
+
+            let query = `
+                SET DateFormat DMY;
+                SELECT
+                    Summary,
+                    ID_Payment,
+                    Member,
+                    ISNULL(Input1, '') AS Input1,
+                    ISNULL(Input2, '') AS Input2,
+                    ISNULL(Input3, '') AS Input3,
+                    CAST(ROUND(Pay_Value, 0) AS int) AS Pay_Value,
+                    ISNULL(EDC_Machine, '') AS EDC_Machine,
+                    Status
+                FROM
+                    IHP_Sud
+                WHERE
+                    Summary IN (
+                    SELECT Summary
+                    FROM IHP_Sul
+                    WHERE 
+                    CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
+                    AND reception IN (
+                        SELECT Rcp.Reception
+                        FROM IHP_Rcp Rcp, IHP_Ivc
+                        WHERE 
+                        CONVERT(CHAR(10), Rcp.DATE_TRANS, 120) = '${date}'
+                        AND Complete = '1'
+                        AND Rcp.Reception = IHP_Ivc.Reception
+                        AND Rcp.Invoice = IHP_Ivc.Invoice
+                    )
+                    )
+                    AND Pay_Value > 0
+                ORDER BY Summary, ID_Payment ASC
+                `;
+                console.log('6');
+        const resultCheck = await execute(queryCheck);
+        if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
+            console.log('kok kosong');
+            resolve([])
+        }
+        
+        const result = await execute(query);
+        console.log('7');
+        for(const sud of result){
+            let queryUM = `
+            SELECT 
+                RCP.ID_Payment AS RCPID_Payment,
+                RCP.Member AS RCPMember,
+                CAST(ROUND(RCP.Uang_Muka, 0) AS int) AS RCPPay_Value,
+                ISNULL(UM.Member, '') AS UMMember,
+                ISNULL(UM.Input1, '') AS Input1,
+                ISNULL(UM.Input2, '') AS Input2,
+                ISNULL(UM.Input3, '') AS Input3,
+                ISNULL(CAST(ROUND(UM.Pay_Value, 0) AS int), 0) AS Pay_Value,
+                ISNULL(UM.EDC_Machine, '') AS EDC_Machine
+            FROM 
+                IHP_SUL SUL,
+                IHP_Rcp RCP
+            LEFT JOIN 
+                IHP_UangMukaNonCash UM 
+                ON RCP.Reception = UM.Reception
+            WHERE 
+                SUL.Reception = RCP.Reception
+                AND SUL.Summary = '${sud.Summary}'
+            `;
+            const resultUM = await execute(queryUM);
+            console.log('8');
+            if(resultUM.length > 0){
+                let UmList = [];
+
+                resultUM.forEach((element)=>{
+                    
+                    if(element.RCPID_Payment == 0){
+                        UmList.push({
+                            ID_Payment: element.RCPID_Payment,
+                            Member: element.RCPMember,
+                            Input1: '',
+                            Input2: '',
+                            Input3: '',
+                            Pay_Value: element.RCPPay_Value,
+                            Status: '0',
+                            EDC_Machine: '',
+                        })
+                    }else{
+                        UmList.push({
+                            ID_Payment: element.RCPID_Payment,
+                            Member: element.UMMember,
+                            Input1: element.Input1,
+                            Input2: element.Input2,
+                            Input3: element.Input3,
+                            Pay_Value: element.Pay_Value,
+                            Status: '0',
+                            EDC_Machine: element.EDC_Machine,
+                        })
+                    }
+                })
+                console.log('9');
+                result.push(UmList);
+            }
+        }
+        console.log('10');
+        console.log(result);
+        resolve(result);
+        } catch (err) {
+            console.log(`
+            Error get User
+                err: ${err}    
+                name: ${err.name}    
+                message: ${err.message}    
+                stack: ${err.stack}    
+            `);
+        }
+    })
+}
+
+const getDetailPromo = (date) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let queryCheck = `
+                SET DATEFORMAT DMY;
+                SELECT 
+                    COUNT(*) as Jumlah
+                FROM 
+                    IHP_Detail_Promo
+                WHERE 
+                    Reception IN (
+                        SELECT 
+                            Rcp.Reception 
+                        FROM 
+                            IHP_Rcp Rcp
+                        JOIN 
+                            IHP_Ivc ON Rcp.Reception = IHP_Ivc.Reception AND Rcp.Invoice = IHP_Ivc.Invoice
+                        WHERE 
+                            CONVERT(CHAR(10), Rcp.DATE_TRANS, 120) = '${date}'
+                            AND Complete = '1'
+            );`;
+
+            let query = `
+                SET DATEFORMAT DMY;
+                SELECT 
+                    Reception, 
+                    CAST(ROUND(Nilai_Promo, 0) AS INT) AS Nilai_Promo 
+                FROM 
+                    IHP_Detail_Promo 
+                WHERE 
+                    Reception IN (
+                    SELECT 
+                        Reception 
+                    FROM 
+                        IHP_Rcp 
+                    WHERE 
+                        CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
+                        AND Complete = '1'
+                    );
+            `;
+            console.log('1')
+        const resultCheck = await execute(queryCheck);
+        if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
+            resolve([])
+        }
+        
+        const result = await execute(query);
+        console.log('2')
+        
+        resolve(result);
+        console.log(result);
+
         } catch (err) {
             console.log(`
             Error get User
@@ -726,5 +1119,9 @@ module.exports = {
     getOkd,
     getOkdPromo,
     getOcl,
-    getOcd
+    getOcd,
+    getOcdPromo,
+    getSul,
+    getSud,
+    getDetailPromo
 }
