@@ -1,8 +1,10 @@
 const execute = require('./src/tools/query-executor');
-const {getUser, getMember, getReservation, getRcp, getOkl, getOkd, getOkdPromo, getOcl, getOcd, getOcdPromo, getSul, getSud, getDetailPromo} = require('./src/data/data');
+const {getUser, getMember, getReservation, getRcp, getOkl, getOkd, getOkdPromo, getOcl, getOcd, getOcdPromo, getSul, getSud, getDetailPromo, getCashSummaryDetail, getRoom, getIvc} = require('./src/data/data');
 
 
 // execute('SELECT GETDATE()')
 
 // getUser()
-getDetailPromo('2023-12-29')
+getIvc('2023-12-29')
+
+// getRoom('2024-07-01')

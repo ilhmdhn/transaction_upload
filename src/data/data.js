@@ -1,5 +1,7 @@
 const execute = require('../tools/query-executor');
 const decryptor = require('../tools/encrypt');
+const encrypt = require('../tools/encrypt');
+const decrypt = require('../tools/decrypt');
 
 const getInventory = (date) => {
     return new Promise(async (resolve, reject) => {
@@ -1108,6 +1110,290 @@ const getDetailPromo = (date) => {
     })
 }
 
+const getCashSummaryDetail = (date) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+
+            let result1 = `
+                SET DATEFORMAT DMY;
+                SELECT 
+                    SUBSTRING(Date, 1, 10) AS Date,
+                    Shift,
+                    SUM(CAST(Seratus_Ribu AS int)) AS Seratus_Ribu,
+                    SUM(CAST(Lima_Puluh_Ribu AS int)) AS Lima_Puluh_Ribu,
+                    SUM(CAST(Dua_Puluh_Ribu AS int)) AS Dua_Puluh_Ribu,
+                    SUM(CAST(Sepuluh_Ribu AS int)) AS Sepuluh_Ribu,
+                    SUM(CAST(Lima_Ribu AS int)) AS Lima_Ribu,
+                    SUM(CAST(Dua_Ribu AS int)) AS Dua_Ribu,
+                    SUM(CAST(Seribu AS int)) AS Seribu,
+                    SUM(CAST(Lima_Ratus AS int)) AS Lima_Ratus,
+                    SUM(CAST(Dua_Ratus AS int)) AS Dua_Ratus,
+                    SUM(CAST(Seratus AS int)) AS Seratus,
+                    SUM(CAST(Lima_Puluh AS int)) AS Lima_Puluh,
+                    SUM(CAST(Dua_Puluh_Lima AS int)) AS Dua_Puluh_Lima
+                                FROM 
+                    IHP_Cash_Summary_Detail
+                WHERE 
+                    CONVERT(CHAR(10), convert(datetime,DATE), 120) =  '${date}'
+                    AND Shift = 1 
+                GROUP BY 
+                    Date, Shift;
+                `;
+
+                let result2 = `
+                SET DATEFORMAT DMY;
+                SELECT 
+                  SUBSTRING(Date, 1, 10) AS Date,
+                  Shift,
+                  SUM(CAST(Seratus_Ribu AS int)) AS Seratus_Ribu,
+                  SUM(CAST(Lima_Puluh_Ribu AS int)) AS Lima_Puluh_Ribu,
+                  SUM(CAST(Dua_Puluh_Ribu AS int)) AS Dua_Puluh_Ribu,
+                  SUM(CAST(Sepuluh_Ribu AS int)) AS Sepuluh_Ribu,
+                  SUM(CAST(Lima_Ribu AS int)) AS Lima_Ribu,
+                  SUM(CAST(Dua_Ribu AS int)) AS Dua_Ribu,
+                  SUM(CAST(Seribu AS int)) AS Seribu,
+                  SUM(CAST(Lima_Ratus AS int)) AS Lima_Ratus,
+                  SUM(CAST(Dua_Ratus AS int)) AS Dua_Ratus,
+                  SUM(CAST(Seratus AS int)) AS Seratus,
+                  SUM(CAST(Lima_Puluh AS int)) AS Lima_Puluh,
+                  SUM(CAST(Dua_Puluh_Lima AS int)) AS Dua_Puluh_Lima
+                FROM 
+                  IHP_Cash_Summary_Detail
+                WHERE 
+                  CONVERT(CHAR(10), convert(datetime,DATE), 120) =  '${date}'
+                  AND Shift = 2 
+                GROUP BY 
+                  Date, Shift;
+              `;
+
+        
+        const resultSatu = await execute(result1);
+        const resultDua = await execute(result2);
+
+        console.log(resultSatu)
+        console.log('\n\n')
+        console.log(resultDua)
+
+        resolve(resultSatu);
+
+        } catch (err) {
+            console.log(`
+            Error get User
+                err: ${err}    
+                name: ${err.name}    
+                message: ${err.message}    
+                stack: ${err.stack}    
+            `);
+        }
+    })
+}
+
+const getRoom = (date) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let queryCheck = `
+                SET DATEFORMAT DMY;
+                SELECT 
+                    COUNT(*) as Jumlah 
+                FROM 
+                    IHP_Room 
+                WHERE 
+                    CONVERT(CHAR(10), convert(datetime,CHTime), 120) =  '${date}'
+            `;
+
+            let query = `
+                SET DATEFORMAT DMY;
+                SELECT 
+                    Kamar, 
+                    Jenis_Kamar 
+                FROM 
+                    IHP_Room 
+                WHERE 
+                    Kamar IN (
+                        SELECT DISTINCT 
+                            Kamar 
+                        FROM 
+                            IHP_Rcp 
+                        WHERE 
+                            CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
+                            AND Complete = '1'
+                    )
+                ORDER BY 
+                    Kamar ASC;
+                `;
+        const resultCheck = await execute(queryCheck);
+        if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
+            resolve([])
+        }
+        
+        const result = await execute(query);
+        
+        resolve(result);
+        console.log(result);
+
+        } catch (err) {
+            console.log(`
+            Error get User
+                err: ${err}    
+                name: ${err.name}    
+                message: ${err.message}    
+                stack: ${err.stack}    
+            `);
+        }
+    })
+}
+
+const getIvc = (date) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let queryCheckChusr = `
+            SET DATEFORMAT DMY;
+            SELECT 
+              Chusr 
+            FROM 
+              IHP_Ivc 
+            WHERE 
+              CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
+              AND Reception IN (
+                  SELECT 
+                      Reception 
+                  FROM 
+                      IHP_Rcp 
+                  WHERE 
+                      CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
+                      AND Complete = '1'
+              );
+          `;
+
+
+
+        const resultChusrCheck = await execute(queryCheckChusr);
+
+        if(resultChusrCheck.length > 0){
+            for(const chusr of resultChusrCheck){
+                const queryCheckAvailableChusr = `select User_ID from IHP_USer where User_ID = ${decrypt(chusr.Chusr)}`;
+                const resultChusr = await execute(queryCheckAvailableChusr);
+                if(resultChusr.length < 0){
+                    reject('CHUSR GA VALID');
+                }
+            }
+        }
+
+        let queryCheckMember = `
+            SET DATEFORMAT DMY;
+            SELECT 
+                member, Reception, Invoice 
+            FROM 
+                IHP_Ivc 
+            WHERE 
+                CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
+                AND Member = ' ' 
+                AND Reception IN (
+                    SELECT 
+                        Reception 
+                    FROM 
+                        IHP_Rcp 
+                    WHERE 
+                        CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
+                        AND Complete = '1'
+                );
+            `;
+        
+        const resultMemberCheck = await execute(queryCheckMember);
+
+        if(resultMemberCheck.length > 0){
+            reject('ERROR Member Kosong RCP '+resultChusrCheck[0].Reception);
+        }
+
+        let queryCheck = `
+            SET DATEFORMAT DMY;
+            SELECT 
+                COUNT(*) as Jumlah 
+            FROM 
+                IHP_Ivc 
+            WHERE 
+                CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
+                AND Reception IN (
+                    SELECT 
+                        Reception 
+                    FROM 
+                        IHP_Rcp 
+                    WHERE 
+                        CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
+                        AND Complete = '1'
+                );
+            `;
+        const resultCheck = await execute(queryCheck)
+
+        if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
+            resolve([])
+        }
+
+        const query = `
+            SET DATEFORMAT DMY;
+            SELECT 
+                IHP_Ivc.Invoice,
+                CONVERT(VARCHAR(10), IHP_Ivc.date_trans, 103) AS Date,
+                IHP_Ivc.Shift,
+                IHP_Ivc.Reception,
+                IHP_Ivc.Member,
+                IHP_Ivc.Nama,
+                REPLACE(IHP_Ivc.Kamar, ' ', '') AS Kamar,
+                IHP_Ivc.Jenis_Kamar,
+                CAST(ROUND(IHP_Ivc.Sewa_Kamar, 0) AS INT) AS Sewa_Kamar,
+                CAST(ROUND(IHP_Ivc.Total_Extend, 0) AS INT) AS Total_Extend,
+                CAST(ROUND(IHP_Ivc.Overpax, 0) AS INT) AS Overpax,
+                CAST(ROUND(IHP_Ivc.Discount_Kamar, 0) AS INT) AS Discount_Kamar,
+                CAST(ROUND(IHP_Ivc.Surcharge_Kamar, 0) AS INT) AS Surcharge_Kamar,
+                CAST(ROUND(IHP_Ivc.Service_Kamar, 0) AS INT) AS Service_Kamar,
+                CAST(ROUND(IHP_Ivc.Tax_Kamar, 0) AS INT) AS Tax_Kamar,
+                CAST(ROUND(IHP_Ivc.Total_Kamar, 0) AS INT) AS Total_Kamar,
+                CAST(ROUND(IHP_Ivc.Charge_Penjualan, 0) AS INT) AS ChargesPenjualan,
+                CAST(ROUND(IHP_Ivc.Total_Cancelation, 0) AS INT) AS Total_Cancelation,
+                CAST(ROUND(IHP_Ivc.Discount_Penjualan, 0) AS INT) AS Discount_Penjualan,
+                CAST(ROUND(IHP_Ivc.Service_Penjualan, 0) AS INT) AS Service_Penjualan,
+                CAST(ROUND(IHP_Ivc.Tax_Penjualan, 0) AS INT) AS Tax_Penjualan,
+                CAST(ROUND(IHP_Ivc.Total_Penjualan, 0) AS INT) AS Total_Penjualan,
+                CAST(ROUND(IHP_Ivc.Charge_Lain, 0) AS INT) AS Charge_Lain,
+                IHP_Ivc.Chusr,
+                IHP_Ivc.Status,
+                IHP_Ivc.Transfer,
+                CAST(ROUND(IHP_Ivc.Uang_Voucher, 0) AS INT) AS Uang_Voucher
+            FROM 
+                IHP_Ivc
+            JOIN 
+                IHP_Rcp ON IHP_Ivc.Invoice = IHP_Rcp.Invoice AND IHP_Ivc.Reception = IHP_Rcp.Reception
+            WHERE 
+                CONVERT(CHAR(10), IHP_Ivc.DATE_TRANS, 120) = '${date}' 
+                AND IHP_Ivc.Invoice IN (SELECT Invoice FROM IHP_Rcp) 
+                AND IHP_Ivc.Reception IN (
+                    SELECT Reception 
+                    FROM IHP_Rcp 
+                    WHERE 
+                    CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}' 
+                    AND Complete = '1'
+                )
+            ORDER BY 
+                IHP_Ivc.Invoice ASC;
+        `;
+        
+        const result = await execute(query);
+        
+        resolve(result);
+        console.log(result);
+
+        } catch (err) {
+            console.log(`
+            Error get User
+                err: ${err}    
+                name: ${err.name}    
+                message: ${err.message}    
+                stack: ${err.stack}    
+            `);
+        }
+    })
+}
+
 module.exports = {
     getInventory,
     getRoomType,
@@ -1123,5 +1409,8 @@ module.exports = {
     getOcdPromo,
     getSul,
     getSud,
-    getDetailPromo
+    getDetailPromo,
+    getCashSummaryDetail,
+    getRoom,
+    getIvc
 }
