@@ -864,7 +864,6 @@ const getSud = (date) => {
                   await execute(deleteQuery);
                 }
             }
-            console.log('4');
             const checkZeroCredit = `
                 SELECT 
                     SUMMARY, PAY_VALUE 
@@ -887,7 +886,6 @@ const getSud = (date) => {
             `;
 
             const zeroCreditResult = await execute(checkZeroCredit);
-            console.log('5');
             if(zeroCreditResult.length>0){
                 for(const cash of zeroCreditResult){
                     let deleteQuery = `
