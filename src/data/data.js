@@ -48,11 +48,9 @@ const getInventory = (date) => {
             if(dataCount.count < 1){
                 resolve([]);
             }
-            console.log(queryData)
             const dataInventory = await execute(queryData);
+            resolve(dataInventory);
 
-
-            console.log(dataInventory);
         } catch (err) {
             console.log(`
             Error get inventory
@@ -65,7 +63,7 @@ const getInventory = (date) => {
     })
 }
 
-const getRoomType = () =>{
+const getRoomType = (date) =>{
     return new Promise(async (resolve, reject) => {
         try {
             const queryCheck = `
@@ -118,11 +116,8 @@ const getRoomType = () =>{
             if(dataCount.count < 1){
                 resolve([]);
             }
-            console.log(queryData)
-            const dataInventory = await execute(queryData);
-
-
-            console.log(dataInventory);
+            const dataRoomType = await execute(queryData);
+            resolve(dataRoomType);
         } catch (err) {
             console.log(`
             Error get inventory
@@ -151,9 +146,11 @@ const getUser = () => {
             `;
 
             const dataUser = await execute(query);
+            let userList = [];
             dataUser.forEach(element => {
-                console.log(decryptor(element.User_ID))
+                userList.push({User_ID: encrypt(element.User_ID)})
             });
+            resolve(userList);
         } catch (err) {
             console.log(`
             Error get User
@@ -217,7 +214,7 @@ const getMember = (date) => {
             `;
 
             const result = await execute(query);
-            console.log(result)
+            resolve(result)
         } catch (err) {
             console.log(`
             Error get User
@@ -265,7 +262,6 @@ const getReservation = (date) =>{
 
             const result = await execute(query);
             resolve(result);
-            console.log(result)
         } catch (err) {
             console.log(`
             Error get User
@@ -317,7 +313,6 @@ const getRcp = (date) => {
 
             const result = await execute(query);
             resolve(result);
-            console.log(result)
         } catch (err) {
             console.log(`
             Error get User
