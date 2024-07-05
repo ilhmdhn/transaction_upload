@@ -3,6 +3,55 @@ const decryptor = require('../tools/encrypt');
 const encrypt = require('../tools/encrypt');
 const decrypt = require('../tools/decrypt');
 
+const getTotalPay = (date) =>{
+    return new Promise(async(resolve, reject)=>{
+        try {
+            const query = `
+            SET DATEFORMAT DMY
+            SELECT 
+                ROUND(ISNULL(SUM(pay_value), 0), 0) AS Pay_Value
+            FROM 
+                IHP_SUL SUL,
+                IHP_SUD SUD
+            WHERE 
+                SUL.Summary = SUD.Summary AND
+                CONVERT(CHAR(10), SUL.DATE_TRANS, 120) = '${date}'
+            `;
+
+            const result = await execute(query);
+            resolve(result[0].Pay_Value);
+        } catch (err) {
+            reject(err);
+        }
+    });
+}
+
+
+const getTotalInvoice = (date) =>{
+    return new Promise(async(resolve, reject)=>{
+        try {
+            let query = `
+            SET DATEFORMAT DMY;
+            SELECT 
+                ROUND(ISNULL(SUM(Total_kamar), 0), 0) AS Total_kamar,
+                ROUND(ISNULL(SUM(total_penjualan), 0), 0) AS total_penjualan,
+                ROUND(ISNULL(SUM(Total_all), 0), 0) AS Total_all
+            FROM 
+                ihp_ivc
+            WHERE 
+                CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
+          `;
+          
+
+            const result = await execute(query);
+            console.log(result[0])
+            resolve(result[0]);
+        } catch (err) {
+            reject(err);
+        }
+    });
+}
+
 const getInventory = (date) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -354,7 +403,7 @@ const getOkl = (date) => {
 
             const result = await execute(query);
             resolve(result);
-            console.log(result)
+            
         } catch (err) {
             console.log(`
             Error get User
@@ -400,7 +449,7 @@ const getOkd = (date) => {
             `;
             const result = await execute(query);
             resolve(result);
-            console.log(result)
+            
         } catch (err) {
             console.log(`
             Error get User
@@ -475,7 +524,7 @@ const getOkdPromo = (date) => {
             const result = await execute(query);
 
             resolve(result);
-            console.log(result)
+            
         } catch (err) {
             console.log(`
             Error get User
@@ -540,8 +589,7 @@ const getOcl = (date) => {
             const result = await execute(query);
 
             resolve(result);
-            console.log('jml '+resultCheck[0].Jumlah)
-            console.log(result)
+            
         } catch (err) {
             console.log(`
             Error get User
@@ -619,8 +667,7 @@ const getOcd = (date) => {
             const result = await execute(query);
 
             resolve(result);
-            console.log('jml '+resultCheck[0].Jumlah)
-            console.log(result)
+            
         } catch (err) {
             console.log(`
             Error get User
@@ -689,22 +736,16 @@ const getOcdPromo = (date) => {
   ORDER BY 
     a.OrderCancelation, Inventory ASC;
                 `;
-        console.log('1')
         const resultCheck = await execute(queryCheck);
-        console.log('2')
-        console.log('DEBUGGING RESULT '+resultCheck[0].Jumlah)
+
         if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
             resolve([])
         }
-        console.log('3')
         
         const result = await execute(query);
-        console.log('4')
         
         resolve(result);
-        console.log('5')
-            console.log('jml '+resultCheck[0].Jumlah)
-            console.log(result)
+            
         } catch (err) {
             console.log(`
             Error get User
@@ -769,8 +810,7 @@ const getSul = (date) => {
         const result = await execute(query);
         
         resolve(result);
-            console.log('jml '+resultCheck[0].Jumlah)
-            console.log(result)
+            
         } catch (err) {
             console.log(`
             Error get User
@@ -786,7 +826,6 @@ const getSul = (date) => {
 const getSud = (date) => {
     return new Promise(async (resolve, reject) => {
         try {
-            console.log('1');
             const checkZeroCash = `
                 SELECT 
                     SUMMARY, PAY_VALUE 
@@ -809,7 +848,6 @@ const getSud = (date) => {
             `;
 
             const zeroCashResult = await execute(checkZeroCash);
-            console.log('2');
             if(zeroCashResult.length>0){
                 for(const cash of zeroCashResult){
                     let deleteQuery = `
@@ -846,7 +884,6 @@ const getSud = (date) => {
                         HAVING COUNT(*) > 1
                     )
             `;
-            console.log('3');
             const zeroDebitResult = await execute(checkZeroDebit);
             
             if(zeroDebitResult.length>0){
@@ -958,15 +995,12 @@ const getSud = (date) => {
                     AND Pay_Value > 0
                 ORDER BY Summary, ID_Payment ASC
                 `;
-                console.log('6');
         const resultCheck = await execute(queryCheck);
         if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
-            console.log('kok kosong');
             resolve([])
         }
         
         const result = await execute(query);
-        console.log('7');
         for(const sud of result){
             let queryUM = `
             SELECT 
@@ -990,7 +1024,6 @@ const getSud = (date) => {
                 AND SUL.Summary = '${sud.Summary}'
             `;
             const resultUM = await execute(queryUM);
-            console.log('8');
             if(resultUM.length > 0){
                 let UmList = [];
 
@@ -1020,12 +1053,12 @@ const getSud = (date) => {
                         })
                     }
                 })
-                console.log('9');
-                result.push(UmList);
+                UmList.forEach((element)=>{
+                    result.push(element)
+                })
+                // result.push(UmList);
             }
         }
-        console.log('10');
-        console.log(result);
         resolve(result);
         } catch (err) {
             console.log(`
@@ -1079,18 +1112,13 @@ const getDetailPromo = (date) => {
                         AND Complete = '1'
                     );
             `;
-            console.log('1')
         const resultCheck = await execute(queryCheck);
         if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
             resolve([])
         }
         
-        const result = await execute(query);
-        console.log('2')
-        
+        const result = await execute(query);        
         resolve(result);
-        console.log(result);
-
         } catch (err) {
             console.log(`
             Error get User
@@ -1163,10 +1191,6 @@ const getCashSummaryDetail = (date) => {
         const resultSatu = await execute(result1);
         const resultDua = await execute(result2);
 
-        console.log(resultSatu)
-        console.log('\n\n')
-        console.log(resultDua)
-
         resolve(resultSatu);
 
         } catch (err) {
@@ -1222,7 +1246,6 @@ const getRoom = (date) => {
         const result = await execute(query);
         
         resolve(result);
-        console.log(result);
 
         } catch (err) {
             console.log(`
@@ -1373,7 +1396,6 @@ const getIvc = (date) => {
         const result = await execute(query);
         
         resolve(result);
-        console.log(result);
 
         } catch (err) {
             console.log(`
@@ -1388,6 +1410,8 @@ const getIvc = (date) => {
 }
 
 module.exports = {
+    getTotalPay,
+    getTotalInvoice,
     getInventory,
     getRoomType,
     getUser,

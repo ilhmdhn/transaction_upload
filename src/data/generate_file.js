@@ -3,7 +3,7 @@ const path = require('path');
 const xmlbuilder = require('xmlbuilder');
 const moment = require('moment');
 
-const { getInventory, getRoomType, getUser, getMember, getReservation, getRcp, getOkl, getOkd, getOkdPromo, getOcd, getOcl, getOcdPromo, getSul, getSud, getDetailPromo, getCashSummaryDetail, getIvc } = require("./data");
+const { getInventory, getRoomType, getUser, getMember, getReservation, getRcp, getOkl, getOkd, getOkdPromo, getOcd, getOcl, getOcdPromo, getSul, getSud, getDetailPromo, getCashSummaryDetail, getIvc, getTotalPay, getTotalInvoice } = require("./data");
 
 const uploadPos = (date) =>{
     return new Promise(async(resolve, reject)=>{
@@ -11,6 +11,19 @@ const uploadPos = (date) =>{
             const getDate = convertDateFormat(date);
             deleteFilesInDirectory('C:/upload_transaction/pos');
             
+            const summaryTotal = await getTotalPay(date);
+            const invoiceTotal = await getTotalInvoice(date);
+
+            const selisih = summaryTotal - invoiceTotal.Total_all;
+
+            if(selisih > 1000 || selisih < (-1000)){
+              reject('selisih')
+            }
+
+
+            console.log(('SElisih' +summaryTotal  + '       '+invoiceTotal.Total_all))
+            console.log('tidak ada selisih '+selisih);
+
             const inventoryData = await getInventory(date);
             if(inventoryData.length >0){
                 const inventoryXml = generateDynamicXML(inventoryData);
@@ -90,11 +103,11 @@ const uploadPos = (date) =>{
                 saveXMLToFile('C:/upload_transaction/pos', `MIHP_Sul_${getDate}.xml`, sulXml);
             }
 
-            // const sudData = await getSud(date);
-            // if(sudData.length >0){
-            //     const sudXml = generateDynamicXML(sudData);
-            //     saveXMLToFile('C:/upload_transaction/pos', `NIHP_Sud_${getDate}.xml`, sudXml);
-            // }
+            const sudData = await getSud(date);
+            if(sudData.length >0){
+                const sudXml = generateDynamicXML(sudData);
+                saveXMLToFile('C:/upload_transaction/pos', `NIHP_Sud_${getDate}.xml`, sudXml);
+            }
 
             const detailPromoData = await getDetailPromo(date);
             if(detailPromoData.length >0){
@@ -144,7 +157,6 @@ const generateDynamicXML = (data) => {
     // Menyimpan file XML
     const filePath = path.join(directory, filename);
     fs.writeFileSync(filePath, xmlContent, 'utf8');
-    console.log(`File XML berhasil dihasilkan dan disimpan sebagai ${filePath}`);
   }
 
   const convertDateFormat = (dateString) =>{
@@ -174,7 +186,6 @@ const generateDynamicXML = (data) => {
           if (err) {
             console.error(`Error deleting file ${filePath}: ${err}`);
           } else {
-            console.log(`Deleted file: ${filePath}`);
           }
         });
       }
