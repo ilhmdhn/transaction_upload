@@ -447,9 +447,24 @@ const getOkd = (date) => {
                 ORDER BY 
                     IHP_Okd.OrderPenjualan, OKDInventory ASC;
             `;
+
+            const item = [];
             const result = await execute(query);
-            resolve(result);
-            
+
+            result.forEach((element)=>{
+                item.push(
+                    {
+                        OrderPenjualan: element.OrderPenjualan,
+                        SlipOrder: element.SlipOrder,
+                        Inventory: element.Inventory,
+                        Nama: element.Nama,
+                        Price: element.Price,
+                        Qty: element.Qty,
+                        Location: element.Location,
+                    }
+                )
+            });
+            resolve(item);            
         } catch (err) {
             console.log(`
             Error get User
@@ -491,8 +506,8 @@ const getOkdPromo = (date) => {
                 SET DateFormat DMY;
                 SELECT 
                     a.OrderPenjualan,
-                    b.InventoryID_Global AS Inventory,
                     a.SlipOrder,
+                    b.InventoryID_Global AS Inventory,
                     CAST(ROUND(a.Harga_Promo, 0) AS INT) AS Harga_Promo
                 FROM 
                     IHP_Okd_Promo a,

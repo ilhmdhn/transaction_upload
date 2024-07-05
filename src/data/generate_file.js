@@ -20,10 +20,6 @@ const uploadPos = (date) =>{
               reject('selisih')
             }
 
-
-            console.log(('SElisih' +summaryTotal  + '       '+invoiceTotal.Total_all))
-            console.log('tidak ada selisih '+selisih);
-
             const inventoryData = await getInventory(date);
             if(inventoryData.length >0){
                 const inventoryXml = generateDynamicXML(inventoryData);

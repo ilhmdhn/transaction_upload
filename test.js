@@ -7,5 +7,5 @@ const { uploadPos } = require('./src/data/generate_file');
 
 // getUser()
 // getIvc('2023-12-29')
-uploadPos('2023-12-29');
+// uploadPos('2023-11-04');
 // getRoom('2024-07-01')
