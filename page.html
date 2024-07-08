@@ -355,7 +355,7 @@
             const date = document.getElementById('date').value;
             const type1 = document.getElementsByName('type')[0].checked ? document.getElementsByName('type')[0].value : '';
             const type2 = document.getElementsByName('type')[1].checked ? document.getElementsByName('type')[1].value : '';
-console.log(date);
+
             ipcRenderer.send('UPLOAD-MINIMART', {
                 date: date,
                 type: type1 || type2

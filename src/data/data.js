@@ -20,6 +20,7 @@ const getTotalPay = (date) =>{
             const result = await execute(query);
             resolve(result[0].Pay_Value);
         } catch (err) {
+            reject(err)
             reject(err);
         }
     });
@@ -45,6 +46,7 @@ const getTotalInvoice = (date) =>{
             const result = await execute(query);
             resolve(result[0]);
         } catch (err) {
+            reject(err)
             reject(err);
         }
     });
@@ -107,13 +109,7 @@ const getInventory = (date) => {
             resolve(listInventory);
 
         } catch (err) {
-            console.log(`
-            Error get inventory
-                err: ${err}    
-                name: ${err.name}    
-                message: ${err.message}    
-                stack: ${err.stack}    
-            `);
+            reject(err);
         }
     })
 }
@@ -174,13 +170,7 @@ const getRoomType = (date) =>{
             const dataRoomType = await execute(queryData);
             resolve(dataRoomType);
         } catch (err) {
-            console.log(`
-            Error get inventory
-                err: ${err}    
-                name: ${err.name}    
-                message: ${err.message}    
-                stack: ${err.stack}    
-            `);
+            reject(err)
         }
     })
 }
@@ -213,13 +203,7 @@ const getUser = () => {
             });
             resolve(userList);
         } catch (err) {
-            console.log(`
-            Error get User
-                err: ${err}    
-                name: ${err.name}    
-                message: ${err.message}    
-                stack: ${err.stack}    
-            `);
+            reject(err)
         }
     })
 }
@@ -277,13 +261,7 @@ const getMember = (date) => {
             const result = await execute(query);
             resolve(result)
         } catch (err) {
-            console.log(`
-            Error get User
-                err: ${err}    
-                name: ${err.name}    
-                message: ${err.message}    
-                stack: ${err.stack}    
-            `);
+            reject(err)
         }
     })
 }
@@ -324,13 +302,7 @@ const getReservation = (date) =>{
             const result = await execute(query);
             resolve(result);
         } catch (err) {
-            console.log(`
-            Error get User
-                err: ${err}    
-                name: ${err.name}    
-                message: ${err.message}    
-                stack: ${err.stack}    
-            `);
+            reject(err)
         }
     })
 }
@@ -375,13 +347,7 @@ const getRcp = (date) => {
             const result = await execute(query);
             resolve(result);
         } catch (err) {
-            console.log(`
-            Error get User
-                err: ${err}    
-                name: ${err.name}    
-                message: ${err.message}    
-                stack: ${err.stack}    
-            `);
+            reject(err)
         }
     })
 }
@@ -417,13 +383,7 @@ const getOkl = (date) => {
             resolve(result);
             
         } catch (err) {
-            console.log(`
-            Error get User
-                err: ${err}    
-                name: ${err.name}    
-                message: ${err.message}    
-                stack: ${err.stack}    
-            `);
+            reject(err)
         }
     })
 }
@@ -478,13 +438,7 @@ const getOkd = (date) => {
             });
             resolve(item);            
         } catch (err) {
-            console.log(`
-            Error get User
-                err: ${err}    
-                name: ${err.name}    
-                message: ${err.message}    
-                stack: ${err.stack}    
-            `);
+            reject(err)
         }
     })
 }
@@ -553,13 +507,7 @@ const getOkdPromo = (date) => {
             resolve(result);
             
         } catch (err) {
-            console.log(`
-            Error get User
-                err: ${err}    
-                name: ${err.name}    
-                message: ${err.message}    
-                stack: ${err.stack}    
-            `);
+            reject(err)
         }
     })
 }
@@ -618,13 +566,7 @@ const getOcl = (date) => {
             resolve(result);
             
         } catch (err) {
-            console.log(`
-            Error get User
-                err: ${err}    
-                name: ${err.name}    
-                message: ${err.message}    
-                stack: ${err.stack}    
-            `);
+            reject(err)
         }
     })
 }
@@ -696,13 +638,7 @@ const getOcd = (date) => {
             resolve(result);
             
         } catch (err) {
-            console.log(`
-            Error get User
-                err: ${err}    
-                name: ${err.name}    
-                message: ${err.message}    
-                stack: ${err.stack}    
-            `);
+            reject(err)
         }
     })
 }
@@ -774,13 +710,7 @@ const getOcdPromo = (date) => {
         resolve(result);
             
         } catch (err) {
-            console.log(`
-            Error get User
-                err: ${err}    
-                name: ${err.name}    
-                message: ${err.message}    
-                stack: ${err.stack}    
-            `);
+            reject(err)
         }
     })
 }
@@ -839,13 +769,7 @@ const getSul = (date) => {
         resolve(result);
             
         } catch (err) {
-            console.log(`
-            Error get User
-                err: ${err}    
-                name: ${err.name}    
-                message: ${err.message}    
-                stack: ${err.stack}    
-            `);
+            reject(err)
         }
     })
 }
@@ -1106,13 +1030,7 @@ const getSud = (date) => {
         }
         resolve(result);
         } catch (err) {
-            console.log(`
-            Error get User
-                err: ${err}    
-                name: ${err.name}    
-                message: ${err.message}    
-                stack: ${err.stack}    
-            `);
+            reject(err)
         }
     })
 }
@@ -1165,13 +1083,7 @@ const getDetailPromo = (date) => {
         const result = await execute(query);        
         resolve(result);
         } catch (err) {
-            console.log(`
-            Error get User
-                err: ${err}    
-                name: ${err.name}    
-                message: ${err.message}    
-                stack: ${err.stack}    
-            `);
+            reject(err)
         }
     })
 }
@@ -1247,13 +1159,7 @@ const getCashSummaryDetail = (date) => {
         resolve(result);
 
         } catch (err) {
-            console.log(`
-            Error get User
-                err: ${err}    
-                name: ${err.name}    
-                message: ${err.message}    
-                stack: ${err.stack}    
-            `);
+            reject(err)
         }
     })
 }
@@ -1301,13 +1207,7 @@ const getRoom = (date) => {
         resolve(result);
 
         } catch (err) {
-            console.log(`
-            Error get User
-                err: ${err}    
-                name: ${err.name}    
-                message: ${err.message}    
-                stack: ${err.stack}    
-            `);
+            reject(err)
         }
     })
 }
@@ -1451,13 +1351,7 @@ const getIvc = (date) => {
         resolve(result);
 
         } catch (err) {
-            console.log(`
-            Error get User
-                err: ${err}    
-                name: ${err.name}    
-                message: ${err.message}    
-                stack: ${err.stack}    
-            `);
+            reject(err)
         }
     })
 }
@@ -1467,7 +1361,7 @@ const search = async() =>{
         const queryCheckAvailableChusr = `select User_ID from IHP_USer where User_ID = ${decrypt("Talitha")}`;
         const resultChusr = await execute(queryCheckAvailableChusr);
     } catch (err) {
-        console.log(err)
+        reject(err)
     }
 }
 
