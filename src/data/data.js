@@ -63,7 +63,10 @@ const getInventory = (date) => {
               IHP_Inventory 
             WHERE 
             Status = 1 
-            AND CONVERT(CHAR(10), CHTime, 120) = '${date}'
+--            AND CONVERT(CHAR(10), CHTime, 120) = '${date}'
+            AND
+                CONVERT(VARCHAR, convert(datetime, CHTime), 120) >  CONVERT(VARCHAR, DATEADD(HOUR, 6, CAST(${date} AS DATETIME)), 120) AND
+                CONVERT(VARCHAR, convert(datetime, CHTime), 120) <  CONVERT(VARCHAR, DATEADD(HOUR, 6, DATEADD(DAY, 1, CAST(${date} AS DATETIME))), 120)
           `;
 
             const queryData = `
@@ -95,8 +98,9 @@ const getInventory = (date) => {
                 Inventory ASC`;
             const listInventory = [];
             const dataCount = await execute(queryCheck);
-            if(dataCount.count < 1){
+            if(dataCount[0].count < 1){
                 resolve([]);
+                return;
             }
             const dataInventory = await execute(queryData);
             dataInventory.forEach((element)=>{
@@ -117,56 +121,46 @@ const getInventory = (date) => {
 const getRoomType = (date) =>{
     return new Promise(async (resolve, reject) => {
         try {
-            const queryCheck = `
-            SET DateFormat DMY
-                SELECT 
-                    Nama_Kamar, 
-                    Hari, 
-                    Time_Start, 
-                    Time_Finish, 
-                    CAST(Overpax as int) as Overpax, 
-                    CAST(ROUND(Tarif,0) as int) as Tarif, 
-                    CONVERT(VARCHAR(19), CHTime, 103) as CHTimeTgl, 
-                    CONVERT(VARCHAR(8), CHTime, 108) as CHTimeJam, 
-                    Chusr
-                FROM 
-                    IHP_Jenis_Kamar 
-                WHERE 
-                    CONVERT(CHAR(10), convert(datetime,CHTime), 120) =  '${date}'
-          `;
 
-            const queryData = `
-            SET DateFormat DMY
-                SELECT 
-                    InventoryID_Global AS Inventory, 
-                    Inventory AS Inventory0,
-                    Nama,
-                    CAST(ROUND(Price, 0) AS int) AS Price 
-                FROM 
-                    IHP_Inventory 
-                WHERE 
-                    Status = 1 
-                    AND Inventory IN (
-                        SELECT DISTINCT Inventory 
-                        FROM IHP_Okd 
-                WHERE OrderPenjualan IN (
-                    SELECT OrderPenjualan 
-                    FROM IHP_Okl 
-                    WHERE Reception IN (
-                    SELECT Reception 
-                    FROM IHP_Rcp 
-                    WHERE 
-                        CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
-                        AND Complete = '1'
-                    )
-                )
-                )
-            ORDER BY 
-                Inventory ASC`;
-            const dataCount = await execute(queryCheck);
-            if(dataCount.count < 1){
+        let query = `
+            SET DateFormat DMY;
+            SELECT 
+                COUNT(*) as count
+            FROM 
+                IHP_Jenis_Kamar
+            WHERE 
+                CONVERT(VARCHAR, convert(datetime, CHTime), 120) >  CONVERT(VARCHAR, DATEADD(HOUR, 6, CAST(${date} AS DATETIME)), 120) 
+            AND
+                CONVERT(VARCHAR, convert(datetime, CHTime), 120) <  CONVERT(VARCHAR, DATEADD(HOUR, 6, DATEADD(DAY, 1, CAST(${date} AS DATETIME))), 120)
+            `;
+
+          let queryData = `
+          SET DateFormat DMY;
+          SELECT
+            Nama_Kamar,
+            Hari,
+            Time_Start,
+            Time_Finish,
+            CAST(Overpax AS INT) AS Overpax,
+            CAST(ROUND(Tarif, 0) AS INT) AS Tarif,
+            CONVERT(VARCHAR(19), CHTime, 103) AS CHTimeTgl,
+            CONVERT(VARCHAR(8), CHTime, 108) AS CHTimeJam,
+            Chusr
+          FROM
+            IHP_Jenis_Kamar
+          WHERE
+            CONVERT(VARCHAR, convert(datetime, CHTime), 120) >  CONVERT(VARCHAR, DATEADD(HOUR, 6, CAST(${date} AS DATETIME)), 120) 
+        AND
+            CONVERT(VARCHAR, convert(datetime, CHTime), 120) <  CONVERT(VARCHAR, DATEADD(HOUR, 6, DATEADD(DAY, 1, CAST(${date} AS DATETIME))), 120)
+        `;
+
+        const dataCount = await execute(query);
+
+        if(dataCount.count < 1){
                 resolve([]);
+                return;
             }
+            console.log('mosok sek rene')
             const dataRoomType = await execute(queryData);
             resolve(dataRoomType);
         } catch (err) {
@@ -243,7 +237,9 @@ const getMember = (date) => {
                     END AS BirthDay
                 FROM IHP_Mbr
                 WHERE 
-                    CONVERT(CHAR(10), convert(datetime,CHTime), 120) =  '${date}'
+--                    CONVERT(CHAR(10), convert(datetime,CHTime), 120) =  '${date}'
+                        CONVERT(VARCHAR, convert(datetime, CHTime), 120) >  CONVERT(VARCHAR, DATEADD(HOUR, 6, CAST(${date} AS DATETIME)), 120) AND
+                        CONVERT(VARCHAR, convert(datetime, CHTime), 120) <  CONVERT(VARCHAR, DATEADD(HOUR, 6, DATEADD(DAY, 1, CAST(${date} AS DATETIME))), 120)
                     OR Member IN (
                         SELECT 
                             Member 
@@ -1177,7 +1173,9 @@ const getRoom = (date) => {
                 FROM 
                     IHP_Room 
                 WHERE 
-                    CONVERT(CHAR(10), convert(datetime,CHTime), 120) =  '${date}'
+--                    CONVERT(CHAR(10), convert(datetime,CHTime), 120) =  '${date}'
+CONVERT(VARCHAR, convert(datetime, CHTime), 120) >  CONVERT(VARCHAR, DATEADD(HOUR, 6, CAST(${date} AS DATETIME)), 120) AND
+CONVERT(VARCHAR, convert(datetime, CHTime), 120) <  CONVERT(VARCHAR, DATEADD(HOUR, 6, DATEADD(DAY, 1, CAST(${date} AS DATETIME))), 120)
             `;
 
             let query = `

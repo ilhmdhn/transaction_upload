@@ -27,7 +27,7 @@ const uploadPos = (date) =>{
                 saveXMLToFile('C:/upload_transaction/pos', `AIHP_Inventory_${getDate}.xml`, inventoryXml);
             }
             
-            const roomTypeData = await getRoomType();
+            const roomTypeData = await getRoomType(date);
             if(roomTypeData.length >0){
                 const roomTypeXml = generateDynamicXML(roomTypeData);
                 saveXMLToFile('C:/upload_transaction/pos', `BIHP_Jenis_Kamar_${getDate}.xml`, roomTypeXml);
