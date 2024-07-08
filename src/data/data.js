@@ -1,5 +1,4 @@
 const execute = require('../tools/query-executor');
-const decryptor = require('../tools/encrypt');
 const encrypt = require('../tools/encrypt');
 const decrypt = require('../tools/decrypt');
 
@@ -44,7 +43,6 @@ const getTotalInvoice = (date) =>{
           
 
             const result = await execute(query);
-            console.log(result[0])
             resolve(result[0]);
         } catch (err) {
             reject(err);
@@ -93,12 +91,20 @@ const getInventory = (date) => {
                 )
             ORDER BY 
                 Inventory ASC`;
+            const listInventory = [];
             const dataCount = await execute(queryCheck);
             if(dataCount.count < 1){
                 resolve([]);
             }
             const dataInventory = await execute(queryData);
-            resolve(dataInventory);
+            dataInventory.forEach((element)=>{
+                listInventory.push({
+                    Inventory: element.Inventory,
+                    Nama: element.Nama,
+                    Price: element.Price
+                });
+            });
+            resolve(listInventory);
 
         } catch (err) {
             console.log(`
@@ -182,6 +188,7 @@ const getRoomType = (date) =>{
 const getUser = () => {
     return new Promise(async (resolve, reject) => {
         try {
+            const regex = /^[A-Z0-9]+$/;
             const query = `
                 Set DateFormat DMY 
                 SELECT 
@@ -197,7 +204,12 @@ const getUser = () => {
             const dataUser = await execute(query);
             let userList = [];
             dataUser.forEach(element => {
-                userList.push({User_ID: encrypt(element.User_ID)})
+                const decryptedName = encrypt(element.User_ID);
+                if(regex.test(decryptedName)){
+                    userList.push({User_ID: decryptedName});
+                }else{
+                    throw `USER POS HARUS MENGGUNAKAN HURUF KAPITAL ${element.User_ID} / ${decryptedName}`
+                }
             });
             resolve(userList);
         } catch (err) {
@@ -223,13 +235,13 @@ const getMember = (date) => {
                     Nama_Lengkap,
                     ISNULL(ALAMAT, ' ') AS ALAMAT,
                     ISNULL(KOTA, ' ') AS KOTA,
-                    ISNULL(KODEPOS, ' ') AS KODEPOS,
-                    ISNULL(Telepon, ' ') AS Telepon,
+                    --ISNULL(KODEPOS, ' ') AS KODEPOS,
+                    --ISNULL(Telepon, ' ') AS Telepon,
                     ISNULL(FAX, ' ') AS FAX,
                     CASE 
                     WHEN HP IS NULL THEN ''
                     WHEN HP = '-' THEN ''
-                    ELSE HP
+                    ELSE Hp
                     END AS HP,
                     CASE 
                     WHEN EMAIL IS NULL THEN ''
@@ -987,28 +999,41 @@ const getSud = (date) => {
                     ISNULL(Input2, '') AS Input2,
                     ISNULL(Input3, '') AS Input3,
                     CAST(ROUND(Pay_Value, 0) AS int) AS Pay_Value,
-                    ISNULL(EDC_Machine, '') AS EDC_Machine,
-                    Status
+                    Status,
+                    ISNULL(EDC_Machine, '') AS EDC_Machine
                 FROM
                     IHP_Sud
                 WHERE
                     Summary IN (
-                    SELECT Summary
-                    FROM IHP_Sul
-                    WHERE 
-                    CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
-                    AND reception IN (
-                        SELECT Rcp.Reception
-                        FROM IHP_Rcp Rcp, IHP_Ivc
+                        SELECT 
+                            Summary
+                        FROM 
+                            IHP_Sul
                         WHERE 
-                        CONVERT(CHAR(10), Rcp.DATE_TRANS, 120) = '${date}'
-                        AND Complete = '1'
-                        AND Rcp.Reception = IHP_Ivc.Reception
-                        AND Rcp.Invoice = IHP_Ivc.Invoice
-                    )
-                    )
-                    AND Pay_Value > 0
-                ORDER BY Summary, ID_Payment ASC
+                            CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
+                        AND 
+                            reception IN (
+                                SELECT 
+                                    Rcp.Reception
+                                FROM   
+                                    IHP_Rcp Rcp, 
+                                    IHP_Ivc
+                                WHERE 
+                                    CONVERT(CHAR(10), Rcp.DATE_TRANS, 120) = '${date}'
+                                AND 
+                                    Complete = '1'
+                                AND 
+                                    Rcp.Reception = IHP_Ivc.Reception
+                                AND 
+                                    Rcp.Invoice = IHP_Ivc.Invoice
+                            )
+                        )
+                        AND 
+                            Pay_Value > 0
+                        ORDER BY 
+                            Summary, 
+                            ID_Payment 
+                            ASC
                 `;
         const resultCheck = await execute(queryCheck);
         if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
@@ -1016,62 +1041,67 @@ const getSud = (date) => {
         }
         
         const result = await execute(query);
-        for(const sud of result){
-            let queryUM = `
-            SELECT 
-                RCP.ID_Payment AS RCPID_Payment,
-                RCP.Member AS RCPMember,
-                CAST(ROUND(RCP.Uang_Muka, 0) AS int) AS RCPPay_Value,
-                ISNULL(UM.Member, '') AS UMMember,
-                ISNULL(UM.Input1, '') AS Input1,
-                ISNULL(UM.Input2, '') AS Input2,
-                ISNULL(UM.Input3, '') AS Input3,
-                ISNULL(CAST(ROUND(UM.Pay_Value, 0) AS int), 0) AS Pay_Value,
-                ISNULL(UM.EDC_Machine, '') AS EDC_Machine
-            FROM 
-                IHP_SUL SUL,
-                IHP_Rcp RCP
-            LEFT JOIN 
-                IHP_UangMukaNonCash UM 
-                ON RCP.Reception = UM.Reception
-            WHERE 
-                SUL.Reception = RCP.Reception
-                AND SUL.Summary = '${sud.Summary}'
-            `;
-            const resultUM = await execute(queryUM);
-            if(resultUM.length > 0){
-                let UmList = [];
 
-                resultUM.forEach((element)=>{
-                    
-                    if(element.RCPID_Payment == 0){
-                        UmList.push({
-                            ID_Payment: element.RCPID_Payment,
-                            Member: element.RCPMember,
-                            Input1: '',
-                            Input2: '',
-                            Input3: '',
-                            Pay_Value: element.RCPPay_Value,
-                            Status: '0',
-                            EDC_Machine: '',
-                        })
-                    }else{
-                        UmList.push({
-                            ID_Payment: element.RCPID_Payment,
-                            Member: element.UMMember,
-                            Input1: element.Input1,
-                            Input2: element.Input2,
-                            Input3: element.Input3,
-                            Pay_Value: element.Pay_Value,
-                            Status: '0',
-                            EDC_Machine: element.EDC_Machine,
-                        })
-                    }
-                })
-                UmList.forEach((element)=>{
-                    result.push(element)
-                })
-                // result.push(UmList);
+        for(const sud of result){
+
+            if(sud.ID_Payment == 6){
+                let queryUM = `
+                    SELECT 
+                        RCP.ID_Payment AS RCPID_Payment,
+                        RCP.Member AS RCPMember,
+                        CAST(ROUND(RCP.Uang_Muka, 0) AS int) AS RCPPay_Value,
+                        ISNULL(UM.Member, '') AS UMMember,
+                        ISNULL(UM.Input1, '') AS Input1,
+                        ISNULL(UM.Input2, '') AS Input2,
+                        ISNULL(UM.Input3, '') AS Input3,
+                        ISNULL(CAST(ROUND(UM.Pay_Value, 0) AS int), 0) AS Pay_Value,
+                        ISNULL(UM.EDC_Machine, '') AS EDC_Machine
+                    FROM 
+                        IHP_SUL SUL,
+                        IHP_Rcp RCP
+                    LEFT JOIN 
+                        IHP_UangMukaNonCash UM 
+                        ON RCP.Reception = UM.Reception
+                    WHERE 
+                        SUL.Reception = RCP.Reception
+                        AND SUL.Summary = '${sud.Summary}'
+                `;
+
+                const resultUM = await execute(queryUM);
+                
+                if(resultUM.length > 0){
+                    let UmList = [];
+    
+                    resultUM.forEach((element)=>{
+                        if(element.RCPID_Payment == 0){
+                            UmList.push({
+                                ID_Payment: element.RCPID_Payment,
+                                Member: element.RCPMember,
+                                Input1: '',
+                                Input2: '',
+                                Input3: '',
+                                Pay_Value: element.RCPPay_Value,
+                                Status: '0',
+                                EDC_Machine: '',
+                            })
+                        }else{
+                            UmList.push({
+                                ID_Payment: element.RCPID_Payment,
+                                Member: element.UMMember,
+                                Input1: element.Input1,
+                                Input2: element.Input2,
+                                Input3: element.Input3,
+                                Pay_Value: element.Pay_Value,
+                                Status: '0',
+                                EDC_Machine: element.EDC_Machine,
+                            })
+                        }
+                    })
+                    UmList.forEach((element)=>{
+                        result.push(element)
+                    })
+                    // result.push(UmList);
+                }
             }
         }
         resolve(result);
@@ -1202,11 +1232,19 @@ const getCashSummaryDetail = (date) => {
                   Date, Shift;
               `;
 
-        
+        const result = [];
         const resultSatu = await execute(result1);
         const resultDua = await execute(result2);
+        
+        if(result1.length >0){
+            result.push(resultSatu[0]);
+        }
 
-        resolve(resultSatu);
+        if(result2.length >0){
+            result.push(resultDua[0]);
+        }
+
+        resolve(result);
 
         } catch (err) {
             console.log(`
@@ -1370,7 +1408,7 @@ const getIvc = (date) => {
                 IHP_Ivc.Member,
                 IHP_Ivc.Nama,
                 REPLACE(IHP_Ivc.Kamar, ' ', '') AS Kamar,
-                IHP_Ivc.Jenis_Kamar,
+                --IHP_Ivc.Jenis_Kamar,
                 CAST(ROUND(IHP_Ivc.Sewa_Kamar, 0) AS INT) AS Sewa_Kamar,
                 CAST(ROUND(IHP_Ivc.Total_Extend, 0) AS INT) AS Total_Extend,
                 CAST(ROUND(IHP_Ivc.Overpax, 0) AS INT) AS Overpax,
@@ -1379,7 +1417,7 @@ const getIvc = (date) => {
                 CAST(ROUND(IHP_Ivc.Service_Kamar, 0) AS INT) AS Service_Kamar,
                 CAST(ROUND(IHP_Ivc.Tax_Kamar, 0) AS INT) AS Tax_Kamar,
                 CAST(ROUND(IHP_Ivc.Total_Kamar, 0) AS INT) AS Total_Kamar,
-                CAST(ROUND(IHP_Ivc.Charge_Penjualan, 0) AS INT) AS ChargesPenjualan,
+                CAST(ROUND(IHP_Ivc.Charge_Penjualan, 0) AS INT) AS CHargesPenjualan,
                 CAST(ROUND(IHP_Ivc.Total_Cancelation, 0) AS INT) AS Total_Cancelation,
                 CAST(ROUND(IHP_Ivc.Discount_Penjualan, 0) AS INT) AS Discount_Penjualan,
                 CAST(ROUND(IHP_Ivc.Service_Penjualan, 0) AS INT) AS Service_Penjualan,
@@ -1424,6 +1462,15 @@ const getIvc = (date) => {
     })
 }
 
+const search = async() =>{
+    try {
+        const queryCheckAvailableChusr = `select User_ID from IHP_USer where User_ID = ${decrypt("Talitha")}`;
+        const resultChusr = await execute(queryCheckAvailableChusr);
+    } catch (err) {
+        console.log(err)
+    }
+}
+
 module.exports = {
     getTotalPay,
     getTotalInvoice,
@@ -1444,5 +1491,6 @@ module.exports = {
     getDetailPromo,
     getCashSummaryDetail,
     getRoom,
-    getIvc
+    getIvc,
+    search
 }

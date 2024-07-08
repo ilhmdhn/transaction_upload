@@ -130,6 +130,8 @@ const uploadPos = (date) =>{
     });
 }
 
+
+
 const generateDynamicXML = (data) => {
     const root = xmlbuilder.create('Dial_Stats')
       .ele('UK_Products_Pipeline');
@@ -141,7 +143,7 @@ const generateDynamicXML = (data) => {
       });
     });
   
-    return root.end({ pretty: true });
+    return root.end({ pretty: true, allowEmpty: true });
   }
 
   const saveXMLToFile = (directory, filename, xmlContent)=> {
