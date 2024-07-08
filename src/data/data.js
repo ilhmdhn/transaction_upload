@@ -198,7 +198,7 @@ const getUser = () => {
                 if(regex.test(decryptedName)){
                     userList.push({User_ID: decryptedName});
                 }else{
-                    throw `USER POS HARUS MENGGUNAKAN HURUF KAPITAL ${element.User_ID} / ${decryptedName}`
+                    // throw `USER POS HARUS MENGGUNAKAN HURUF KAPITAL ${element.User_ID} / ${decryptedName}`
                 }
             });
             resolve(userList);
@@ -239,7 +239,7 @@ const getMember = (date) => {
                     CASE 
                     WHEN BirthDay = '1900-01-01 12:00:00' THEN (CONVERT(VARCHAR(10), CAST('01/01/1900' AS datetime), 103))
                     WHEN BirthDay = '1900-01-01 00:00:00' THEN (CONVERT(VARCHAR(10), CAST('01/01/1900' AS datetime), 103))
-                    ELSE (CONVERT(VARCHAR(10), CAST(ISNULL(BirthDay, '01/01/1900') AS datetime), 103))
+                    ELSE (CONVERT(VARCHAR(10), ISNULL(BirthDay, '01/01/1900'), 103))
                     END AS BirthDay
                 FROM IHP_Mbr
                 WHERE 
@@ -965,7 +965,7 @@ const getSud = (date) => {
         }
         
         const result = await execute(query);
-
+        const listSud = [];
         for(const sud of result){
 
             if(sud.ID_Payment == 6){
@@ -1010,6 +1010,7 @@ const getSud = (date) => {
                             })
                         }else{
                             UmList.push({
+                                Summary: sud.Summary,
                                 ID_Payment: element.RCPID_Payment,
                                 Member: element.UMMember,
                                 Input1: element.Input1,
@@ -1022,13 +1023,15 @@ const getSud = (date) => {
                         }
                     })
                     UmList.forEach((element)=>{
-                        result.push(element)
+                        listSud.push(element)
                     })
                     // result.push(UmList);
                 }
+            }else{
+                listSud.push(sud);
             }
         }
-        resolve(result);
+        resolve(listSud);
         } catch (err) {
             reject(err)
         }

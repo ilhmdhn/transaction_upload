@@ -17,6 +17,7 @@ const uploadPos = (date) =>{
             const selisih = summaryTotal - invoiceTotal.Total_all;
 
             if(selisih > 1000 || selisih < (-1000)){
+              console.log('anu')
               reject('selisih')
             }
 
@@ -139,7 +140,11 @@ const generateDynamicXML = (data) => {
     data.forEach(item => {
       const ihp = root.ele('ihp');
       Object.keys(item).forEach(key => {
-        ihp.ele(key, item[key]);
+        if(!item[key] && (item[key] != 0)){
+          ihp.ele(key, '');
+        }else{
+          ihp.ele(key, item[key]);
+        }
       });
     });
   

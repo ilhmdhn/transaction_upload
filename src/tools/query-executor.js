@@ -8,6 +8,14 @@ module.exports = (query) =>{
             const result = await sql.query(query);
             resolve(result.recordset)
         } catch (err) {
+            console.log(query)
+            console.log(`
+                ERROR
+                err: ${err.err}
+                name: ${err.name}
+                message: ${err.message}
+                stack: ${err.stack}
+                `)
             reject(err);
         }
     });

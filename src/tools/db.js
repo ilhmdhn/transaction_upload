@@ -1,7 +1,7 @@
 module.exports = {
         user: 'sa',
         password: '123',
-        database: 'HP112',
+        database: 'HP043',
         server: '192.168.1.136',
         pool: {
           max: 10,

@@ -4,10 +4,6 @@ const { uploadPos } = require('./src/data/generate_file');
 const encrypt = require('./src/tools/encrypt');
 const decrypt = require('./src/tools/decrypt');
 
-
-const xorCrypt = require('xor-crypt');
-const xor = require('xor-crypt');
-
 // execute('SELECT GETDATE()')
 
 // getUser()
@@ -17,4 +13,4 @@ const xor = require('xor-crypt');
 
 // console.log(encrypt("­œ”ŸŠ’–"))
 // console.log(decrypt("Talitha"))
-search()
+// search()

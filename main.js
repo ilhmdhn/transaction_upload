@@ -42,7 +42,17 @@ const createWindow = () =>{
             console.log('Tanggal tidak valid '+data.date)
             return;
         }
-        uploadPos(data.date);
+        try {
+            uploadPos(data.date);
+        } catch (error) {
+            console.log(`
+            ERROR
+            err: ${error.err}
+            name: ${error.name}
+            message: ${error.message}
+            stack: ${error.stack}
+            `)
+        }
     });
 }
 
