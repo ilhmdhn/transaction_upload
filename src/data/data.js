@@ -1,6 +1,7 @@
 const execute = require('../tools/query-executor');
 const encrypt = require('../tools/encrypt');
 const decrypt = require('../tools/decrypt');
+const moment = require('moment');
 
 const getTotalPay = (date) =>{
     return new Promise(async(resolve, reject)=>{
@@ -52,6 +53,126 @@ const getTotalInvoice = (date) =>{
     });
 }
 
+const cekSummaryCashBalance = (date) =>{
+    return new Promise(async(resolve, reject)=>{
+        try {
+            let jumlahCash = 0;
+
+            let cekCashPayment = `
+                set dateformat DMY;
+                SELECT 
+                    ISNULL(SUM(pay_value), 0) as Pay_Value 
+                FROM 
+                    IHP_SUL SUL, 
+                    IHP_SUD SUD 
+                WHERE 
+                    SUL.Summary = SUD.Summary 
+                AND 
+                    id_payment = '0' 
+                AND 
+                    CONVERT(CHAR(10), SUL.Date_Trans, 120) = '${date}'
+            `;
+            
+            const paymentCashTemp = await execute(cekCashPayment);
+            
+            const cashPaymentTotal = paymentCashTemp[0].Pay_Value;
+
+            let dpCashQuery = `
+                SET dateformat dmy;
+                SELECT 
+                    ISNULL(SUM(Uang_Muka), 0) AS Uang_Muka 
+                FROM 
+                    IHP_Rsv 
+                WHERE 
+                    CONVERT(CHAR(10), date_trans, 120) = '${date}'
+                AND 
+                    status = 1 
+                AND 
+                    ID_Payment = 0 
+                AND 
+                    Reservation NOT IN (SELECT Reservation FROM IHP_Rcp)
+            `;
+
+            const dpCashTemp = await execute(dpCashQuery);
+
+            const cashDpTotal = dpCashTemp[0].Uang_Muka;
+
+            const dpCashCancelQuery = `
+                SET dateformat dmy;
+                SELECT 
+                    ISNULL(SUM(Uang_Muka), 0) AS Cash_Rsv
+                FROM 
+                    IHP_Rsv
+                WHERE
+                    CONVERT(CHAR(10), date_trans, 120) = '${date}'
+                AND 
+                    status = 3 
+                AND 
+                    ID_Payment = 0
+            `;
+
+            const dpCashCancelTemp = await execute(dpCashCancelQuery);
+            
+            const cashDpCancel = dpCashCancelTemp[0].Cash_Rsv;
+            
+            const formattedDate = moment(date).format('DD/MM/YYYY');
+            let query = `
+                SELECT 
+                    * 
+                FROM 
+                    IHP_Cash_Summary_Detail 
+                WHERE 
+                    DATE = '${formattedDate} 00:00:00' 
+                AND 
+                    Status = '0'
+            `;
+            
+            const summaryCheck = await execute(query);
+            
+            if(summaryCheck.length < 1){
+                resolve(0);
+                return;
+            }
+            
+            summaryCheck.forEach((element)=>{
+                jumlahCash +=   (element.Seratus_Ribu    *  100000)
+                            +   (element.Lima_Puluh_Ribu *   50000)
+                            +   (element.Dua_Puluh_Ribu  *   20000)
+                            +   (element.Sepuluh_Ribu    *   10000)
+                            +   (element.Lima_Ribu       *    5000)
+                            +   (element.Dua_Ribu        *    2000)
+                            +   (element.Seribu          *    1000)
+                            +   (element.Lima_Ratus      *     500)
+                            +   (element.Dua_Ratus       *     200)
+                            +   (element.Seratus         *     100)
+                            +   (element.Lima_Puluh      *      50)
+                            +   (element.Dua_Puluh_Lima  *      25);
+            });
+
+            const totalCash = cashPaymentTotal + cashDpTotal + cashDpCancel;
+            
+            if(totalCash == 0){
+                resolve(true);
+            }else if(totalCash > jumlahCash){
+                reject('Detail pecahan di FO kurang ');
+            }else if(totalCash == jumlahCash){
+                resolve(true);
+            }else if(totalCash < jumlahCash){
+                if((jumlahCash - totalCash) > 2000){
+                    reject('Detail pecahan di FO kurang');
+                }
+                else if((jumlahCash - totalCash) <= 2000){
+                    resolve(true);
+                }
+            }
+            reject('Jummlah cash di FO tidak seimbang');
+
+        } catch (err) {
+            reject(err);
+        }
+    });
+}
+
 const getInventory = (date) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -65,8 +186,8 @@ const getInventory = (date) => {
             Status = 1 
 --            AND CONVERT(CHAR(10), CHTime, 120) = '${date}'
             AND
-                CONVERT(VARCHAR, convert(datetime, CHTime), 120) >  CONVERT(VARCHAR, DATEADD(HOUR, 6, CAST(${date} AS DATETIME)), 120) AND
-                CONVERT(VARCHAR, convert(datetime, CHTime), 120) <  CONVERT(VARCHAR, DATEADD(HOUR, 6, DATEADD(DAY, 1, CAST(${date} AS DATETIME))), 120)
+                CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) >  '${moment(date).format('YYYY-MM-DD') + ' 06:00:00'}' AND
+                CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) <  '${moment(date).add(1, 'days').format('YYYY-MM-DD') + ' 06:00:00'}'
           `;
 
             const queryData = `
@@ -96,14 +217,23 @@ const getInventory = (date) => {
                 )
             ORDER BY 
                 Inventory ASC`;
+
             const listInventory = [];
+            console.log(queryCheck)
             const dataCount = await execute(queryCheck);
+            console.log(`jumlah inventory length `+dataCount[0].count)
             if(dataCount[0].count < 1){
                 resolve([]);
                 return;
             }
+            
             const dataInventory = await execute(queryData);
+            console.log(`jumlah inventory list `+dataInventory)
             dataInventory.forEach((element)=>{
+                if(element.Inventory == ''){
+                    console.log('anu '+element.Inventory)
+                    reject(`Item ${element.Nama} Tidak ada ID Global`)
+                }
                 listInventory.push({
                     Inventory: element.Inventory,
                     Nama: element.Nama,
@@ -129,9 +259,9 @@ const getRoomType = (date) =>{
             FROM 
                 IHP_Jenis_Kamar
             WHERE 
-                CONVERT(VARCHAR, convert(datetime, CHTime), 120) >  CONVERT(VARCHAR, DATEADD(HOUR, 6, CAST(${date} AS DATETIME)), 120) 
+                CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) >  '${moment(date).format('YYYY-MM-DD') + ' 06:00:00'}' 
             AND
-                CONVERT(VARCHAR, convert(datetime, CHTime), 120) <  CONVERT(VARCHAR, DATEADD(HOUR, 6, DATEADD(DAY, 1, CAST(${date} AS DATETIME))), 120)
+                CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) <  '${moment(date).add(1, 'days').format('YYYY-MM-DD') + ' 06:00:00'}'
             `;
 
           let queryData = `
@@ -149,9 +279,9 @@ const getRoomType = (date) =>{
           FROM
             IHP_Jenis_Kamar
           WHERE
-            CONVERT(VARCHAR, convert(datetime, CHTime), 120) >  CONVERT(VARCHAR, DATEADD(HOUR, 6, CAST(${date} AS DATETIME)), 120) 
+            CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) >  '${moment(date).format('YYYY-MM-DD') + ' 06:00:00'}' 
         AND
-            CONVERT(VARCHAR, convert(datetime, CHTime), 120) <  CONVERT(VARCHAR, DATEADD(HOUR, 6, DATEADD(DAY, 1, CAST(${date} AS DATETIME))), 120)
+            CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) <  '${moment(date).add(1, 'days').format('YYYY-MM-DD') + ' 06:00:00'}'
         `;
 
         const dataCount = await execute(query);
@@ -219,8 +349,8 @@ const getMember = (date) => {
                     CASE 
                     WHEN HP IS NULL THEN ''
                     WHEN HP = '-' THEN ''
-                    ELSE Hp
-                    END AS HP,
+                    ELSE HP
+                    END AS Hp,
                     CASE 
                     WHEN EMAIL IS NULL THEN ''
                     WHEN EMAIL NOT LIKE '%_@__%.__%' THEN ''
@@ -238,8 +368,8 @@ const getMember = (date) => {
                 FROM IHP_Mbr
                 WHERE 
 --                    CONVERT(CHAR(10), convert(datetime,CHTime), 120) =  '${date}'
-                        CONVERT(VARCHAR, convert(datetime, CHTime), 120) >  CONVERT(VARCHAR, DATEADD(HOUR, 6, CAST(${date} AS DATETIME)), 120) AND
-                        CONVERT(VARCHAR, convert(datetime, CHTime), 120) <  CONVERT(VARCHAR, DATEADD(HOUR, 6, DATEADD(DAY, 1, CAST(${date} AS DATETIME))), 120)
+                        CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) >  '${moment(date).format('YYYY-MM-DD') + ' 06:00:00'}' AND
+                        CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) <  '${moment(date).add(1, 'days').format('YYYY-MM-DD') + ' 06:00:00'}'
                     OR Member IN (
                         SELECT 
                             Member 
@@ -1174,8 +1304,8 @@ const getRoom = (date) => {
                     IHP_Room 
                 WHERE 
 --                    CONVERT(CHAR(10), convert(datetime,CHTime), 120) =  '${date}'
-CONVERT(VARCHAR, convert(datetime, CHTime), 120) >  CONVERT(VARCHAR, DATEADD(HOUR, 6, CAST(${date} AS DATETIME)), 120) AND
-CONVERT(VARCHAR, convert(datetime, CHTime), 120) <  CONVERT(VARCHAR, DATEADD(HOUR, 6, DATEADD(DAY, 1, CAST(${date} AS DATETIME))), 120)
+CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) >  '${moment(date).format('YYYY-MM-DD') + ' 06:00:00'}' AND
+CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) <  '${moment(date).add(1, 'days').format('YYYY-MM-DD') + ' 06:00:00'}'
             `;
 
             let query = `
@@ -1369,6 +1499,7 @@ const search = async() =>{
 module.exports = {
     getTotalPay,
     getTotalInvoice,
+    cekSummaryCashBalance,
     getInventory,
     getRoomType,
     getUser,

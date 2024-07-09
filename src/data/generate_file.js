@@ -3,7 +3,7 @@ const path = require('path');
 const xmlbuilder = require('xmlbuilder');
 const moment = require('moment');
 
-const { getInventory, getRoomType, getUser, getMember, getReservation, getRcp, getOkl, getOkd, getOkdPromo, getOcd, getOcl, getOcdPromo, getSul, getSud, getDetailPromo, getCashSummaryDetail, getIvc, getTotalPay, getTotalInvoice } = require("./data");
+const { getInventory, getRoomType, getUser, getMember, getReservation, getRcp, getOkl, getOkd, getOkdPromo, getOcd, getOcl, getOcdPromo, getSul, getSud, getDetailPromo, getCashSummaryDetail, getIvc, getTotalPay, getTotalInvoice, cekSummaryCashBalance } = require("./data");
 
 const uploadPos = (date) =>{
     return new Promise(async(resolve, reject)=>{
@@ -20,6 +20,8 @@ const uploadPos = (date) =>{
               console.log('anu')
               reject('selisih')
             }
+
+            await cekSummaryCashBalance(date);
 
             const inventoryData = await getInventory(date);
             if(inventoryData.length >0){
