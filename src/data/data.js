@@ -177,61 +177,68 @@ const getInventory = (date) => {
     return new Promise(async (resolve, reject) => {
         try {
             const queryCheck = `
-            SET DateFormat DMY
-            SELECT 
-              COUNT(*) AS count 
-            FROM 
-              IHP_Inventory 
-            WHERE 
-            Status = 1 
---            AND CONVERT(CHAR(10), CHTime, 120) = '${date}'
-            AND
-                CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) >  '${moment(date).format('YYYY-MM-DD') + ' 06:00:00'}' AND
-                CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) <  '${moment(date).add(1, 'days').format('YYYY-MM-DD') + ' 06:00:00'}'
-          `;
-
-            const queryData = `
-            SET DateFormat DMY
+                SET DateFormat DMY
                 SELECT 
-                    InventoryID_Global AS Inventory, 
-                    Inventory AS Inventory0,
-                    Nama,
-                    CAST(ROUND(Price, 0) AS int) AS Price 
+                  COUNT(*) AS count 
                 FROM 
-                    IHP_Inventory 
+                  IHP_Inventory 
                 WHERE 
                     Status = 1 
-                    AND Inventory IN (
-                        SELECT DISTINCT Inventory 
-                        FROM IHP_Okd 
-                WHERE OrderPenjualan IN (
-                    SELECT OrderPenjualan 
-                    FROM IHP_Okl 
-                    WHERE Reception IN (
-                    SELECT Reception 
-                    FROM IHP_Rcp 
-                    WHERE CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
-                        AND Complete = '1'
-                    )
-                )
-                )
-            ORDER BY 
-                Inventory ASC`;
+                AND
+                    CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) >  '${moment(date).format('YYYY-MM-DD') + ' 06:00:00'}' 
+                AND
+                    CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) <  '${moment(date).add(1, 'days').format('YYYY-MM-DD') + ' 06:00:00'}'
+            `;
+
+            const queryData = `
+                SET DateFormat DMY
+                    SELECT 
+                        InventoryID_Global AS Inventory, 
+                        Inventory AS Inventory0,
+                        Nama,
+                        CAST(ROUND(Price, 0) AS int) AS Price 
+                    FROM 
+                        IHP_Inventory 
+                    WHERE 
+                        Status = 1 
+                        AND Inventory IN (
+                            SELECT DISTINCT Inventory 
+                            FROM IHP_Okd 
+                    WHERE 
+                        OrderPenjualan IN (
+                            SELECT 
+                                OrderPenjualan 
+                            FROM 
+                                IHP_Okl 
+                            WHERE 
+                                Reception IN (
+                                    SELECT 
+                                        Reception 
+                                    FROM 
+                                        IHP_Rcp 
+                                    WHERE 
+                                        CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
+                                    AND 
+                                        Complete = '1'
+                                )
+                            )
+                        )
+                    ORDER BY 
+                        Inventory ASC
+            `;
 
             const listInventory = [];
-            console.log(queryCheck)
             const dataCount = await execute(queryCheck);
-            console.log(`jumlah inventory length `+dataCount[0].count)
+
             if(dataCount[0].count < 1){
                 resolve([]);
                 return;
             }
             
             const dataInventory = await execute(queryData);
-            console.log(`jumlah inventory list `+dataInventory)
+
             dataInventory.forEach((element)=>{
                 if(element.Inventory == ''){
-                    console.log('anu '+element.Inventory)
                     reject(`Item ${element.Nama} Tidak ada ID Global`)
                 }
                 listInventory.push({
@@ -240,8 +247,8 @@ const getInventory = (date) => {
                     Price: element.Price
                 });
             });
-            resolve(listInventory);
 
+            resolve(listInventory);
         } catch (err) {
             reject(err);
         }
@@ -252,51 +259,50 @@ const getRoomType = (date) =>{
     return new Promise(async (resolve, reject) => {
         try {
 
-        let query = `
-            SET DateFormat DMY;
-            SELECT 
-                COUNT(*) as count
-            FROM 
-                IHP_Jenis_Kamar
-            WHERE 
-                CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) >  '${moment(date).format('YYYY-MM-DD') + ' 06:00:00'}' 
-            AND
-                CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) <  '${moment(date).add(1, 'days').format('YYYY-MM-DD') + ' 06:00:00'}'
+            let query = `
+                SET DateFormat DMY;
+                SELECT 
+                    COUNT(*) as count
+                FROM 
+                    IHP_Jenis_Kamar
+                WHERE 
+                    CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) >  '${moment(date).format('YYYY-MM-DD') + ' 06:00:00'}' 
+                AND
+                    CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) <  '${moment(date).add(1, 'days').format('YYYY-MM-DD') + ' 06:00:00'}'
             `;
 
-          let queryData = `
-          SET DateFormat DMY;
-          SELECT
-            Nama_Kamar,
-            Hari,
-            Time_Start,
-            Time_Finish,
-            CAST(Overpax AS INT) AS Overpax,
-            CAST(ROUND(Tarif, 0) AS INT) AS Tarif,
-            CONVERT(VARCHAR(19), CHTime, 103) AS CHTimeTgl,
-            CONVERT(VARCHAR(8), CHTime, 108) AS CHTimeJam,
-            Chusr
-          FROM
-            IHP_Jenis_Kamar
-          WHERE
-            CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) >  '${moment(date).format('YYYY-MM-DD') + ' 06:00:00'}' 
-        AND
-            CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) <  '${moment(date).add(1, 'days').format('YYYY-MM-DD') + ' 06:00:00'}'
-        `;
+            let queryData = `
+                SET DateFormat DMY;
+                SELECT
+                    Nama_Kamar,
+                    Hari,
+                    Time_Start,
+                    Time_Finish,
+                    CAST(Overpax AS INT) AS Overpax,
+                    CAST(ROUND(Tarif, 0) AS INT) AS Tarif,
+                    CONVERT(VARCHAR(19), CHTime, 103) AS CHTimeTgl,
+                    CONVERT(VARCHAR(8), CHTime, 108) AS CHTimeJam,
+                    Chusr
+                FROM
+                    IHP_Jenis_Kamar
+                WHERE
+                    CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) >  '${moment(date).format('YYYY-MM-DD') + ' 06:00:00'}' 
+                AND
+                    CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) <  '${moment(date).add(1, 'days').format('YYYY-MM-DD') + ' 06:00:00'}'
+                `;
 
         const dataCount = await execute(query);
 
-        if(dataCount.count < 1){
+        if(dataCount[0].count < 1){
                 resolve([]);
                 return;
-            }
-            console.log('mosok sek rene')
+        }
             const dataRoomType = await execute(queryData);
             resolve(dataRoomType);
         } catch (err) {
             reject(err)
         }
-    })
+    });
 }
 
 const getUser = () => {
