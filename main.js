@@ -29,7 +29,7 @@ const createWindow = () =>{
         enableRemoteModule: true
     });
 
-    win.loadFile(path.join(__dirname, '/page.html'));
+    win.loadFile(path.join(__dirname, './src/page/page.html'));
 
     win.focus();
     win.center();
@@ -38,22 +38,38 @@ const createWindow = () =>{
     const tray = new Tray(iconTray);
 
     ipcMain.on('UPLOAD-POS', async (event, data) => {
-        if(!data.date){
-            console.log('Tanggal tidak valid '+data.date)
-            return;
-        }
         try {
-            uploadPos(data.date);
-        } catch (error) {
-            console.log(`
-            ERROR
-            err: ${error.err}
-            name: ${error.name}
-            message: ${error.message}
-            stack: ${error.stack}
-            `)
+            console.log(data)
+            if(!data.date){
+                throw `Tanggal tidak valid ${data.date}`
+            }
+
+            showLoading()
+            const date =  data.date;
+            const normal =  data.normal;
+            const tax =  data.tax;
+            
+            await uploadPos(date, normal, tax)   
+            closeLoading()
+        } catch (err) {
+            console.log(err)
+            closeLoading()
         }
     });
+
+    function delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    const showLoading = () =>{
+        console.log('show loading')
+        win.webContents.send('SHOW-LOADING',true);
+    }
+    
+    const closeLoading = () =>{
+        console.log('close loading')
+        win.webContents.send('CLOSE-LOADING',{yaa: 'yaa'});
+    }
 }
 
 app.whenReady().then(() => {
