@@ -68,8 +68,19 @@ const createWindow = () =>{
         }
     });
 
+    ipcMain.on('SAVE-NORMAL', async (event, data) => {
+        console.log('KO KENE')
+        showNormalConfig()
+    });
+
+    ipcMain.on('SAVE-OUTLET', async (event, data) => {
+        setOutlet(data)
+        showOutlet()
+    });
+
     const showNormalConfig = () =>{
         const dbInfo = getDbNormal();
+        console.log(dbInfo)
         win.webContents.send('SHOW-DB-NORMAL', dbInfo);
     }
 

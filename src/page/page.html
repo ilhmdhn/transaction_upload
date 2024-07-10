@@ -437,7 +437,7 @@
                                 <h4 style="margin: 0;">Outlet</h4>
                             </div>
                             <div class="col-lg-8" style="flex: 0 0 50%;">
-                                <input type="text" class="form-control"
+                                <input type="text" class="form-control" id="tf_outlet"
                                     style="margin-bottom: -0.5em; height: fit-content; font-size: 15px; padding: 2px;">
                             </div>
                         </div>
@@ -453,7 +453,7 @@
                                         IP
                                     </div>
                                     <div class="col-6">
-                                        <input type="text" name="ip_normal" style="padding: 2px; font-size: 12px;">
+                                        <input type="text" id="ip_normal" style="padding: 2px; font-size: 12px;">
                                     </div>
                                     <div class="col-3">
                                     </div>
@@ -461,7 +461,7 @@
                                         User
                                     </div>
                                     <div class="col-6">
-                                        <input type="text" name="user_normal" style="padding: 2px; font-size: 12px;">
+                                        <input type="text" id="user_normal" style="padding: 2px; font-size: 12px;">
                                     </div>
                                     <div class="col-3">
                                     </div>
@@ -469,7 +469,7 @@
                                         Pass
                                     </div>
                                     <div class="col-6">
-                                        <input type="text" name="pass_normal" style="padding: 2px; font-size: 12px;">
+                                        <input type="text" id="pass_normal" style="padding: 2px; font-size: 12px;">
                                     </div>
                                     <div class="col-3">
                                     </div>
@@ -477,7 +477,7 @@
                                         DB
                                     </div>
                                     <div class="col-6">
-                                        <input type="text" name="db_normal" style="padding: 2px; font-size: 12px;">
+                                        <input type="text" id="db_normal" style="padding: 2px; font-size: 12px;">
                                     </div>
                                     <div class="col-3">
                                     </div>
@@ -494,7 +494,7 @@
                                         IP
                                     </div>
                                     <div class="col-6">
-                                        <input type="text" name="ip_pajak" style="padding: 2px; font-size: 12px;">
+                                        <input type="text" id="ip_pajak" style="padding: 2px; font-size: 12px;">
                                     </div>
                                     <div class="col-3">
                                     </div>
@@ -502,7 +502,7 @@
                                         User
                                     </div>
                                     <div class="col-6">
-                                        <input type="text" name="user_pajak" style="padding: 2px; font-size: 12px;">
+                                        <input type="text" id="user_pajak" style="padding: 2px; font-size: 12px;">
                                     </div>
                                     <div class="col-3">
                                     </div>
@@ -510,7 +510,7 @@
                                         Pass
                                     </div>
                                     <div class="col-6">
-                                        <input type="text" name="pass_pajak" style="padding: 2px; font-size: 12px;">
+                                        <input type="text" id="pass_pajak" style="padding: 2px; font-size: 12px;">
                                     </div>
                                     <div class="col-3">
                                     </div>
@@ -518,7 +518,7 @@
                                         DB
                                     </div>
                                     <div class="col-6">
-                                        <input type="text" name="db_pajak" style="padding: 2px; font-size: 12px;">
+                                        <input type="text" id="db_pajak" style="padding: 2px; font-size: 12px;">
                                     </div>
                                     <div class="col-3">
                                     </div>
@@ -636,11 +636,37 @@
         success_alert(data.title, data.message)
     });
 
+    ipcRenderer.on('SHOW-DB-NORMAL', (event, data)=>{
+        const ipNormal = document.getElementById('ip_normal');
+        const userNormal = document.getElementById('user_normal');
+        const passNormal = document.getElementById('pass_normal');
+        const dbNormal = document.getElementById('db_normal');
+
+        ipNormal.value = data.ip;
+        userNormal.value = data.user;
+        passNormal.value = data.pass;
+        dbNormal.value = data.db;
+    })
+    
+    ipcRenderer.on('SHOW-OUTLET', (event, data)=>{
+        const tfOutlet = document.getElementById('tf_outlet');
+        tfOutlet.value = data;
+    });
+
+    const saveOutlet = () =>{
+        const tfOutlet = document.getElementById('tf_outlet');
+        ipcRenderer.send('SAVE-OUTLET', tfOutlet.value);
+    }
+
+    const svNor = () =>{
+        ipcRenderer.send('SAVE-NORMAL');
+    }
+
     const upPos = async () => {
         const normalState = document.getElementById("type1").checked;
         const taxState = document.getElementById("type2").checked;
         const datePick = document.getElementById('tanggal');
-        
+
         ipcRenderer.send('UPLOAD-POS', {
             date: `${datePick.value}`,
             normal: normalState,
