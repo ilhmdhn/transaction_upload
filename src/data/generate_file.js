@@ -1,32 +1,71 @@
-const fs = require('fs');
-const path = require('path');
-const xmlbuilder = require('xmlbuilder');
-const moment = require('moment');
+  const fs = require('fs');
+  const path = require('path');
+  const xmlbuilder = require('xmlbuilder');
+  const moment = require('moment');
 
-const { getInventory, getRoomType, getUser, getMember, getReservation, getRcp, getOkl, getOkd, getOkdPromo, getOcd, getOcl, getOcdPromo, getSul, getSud, getDetailPromo, getCashSummaryDetail, getIvc, getTotalPay, getTotalInvoice, cekSummaryCashBalance } = require("./data");
-const uploadAllFiles = require('../network/upload');
-const config = require('./config');
+  const { getInventory, getRoomType, getUser, getMember, getReservation, getRcp, getOkl, getOkd, getOkdPromo, getOcd, getOcl, getOcdPromo, getSul, getSud, getDetailPromo, getCashSummaryDetail, getIvc, getTotalPay, getTotalInvoice, cekSummaryCashBalance } = require("./data");
+  const uploadAllFiles = require('../network/upload');
+  const config = require('./config');
 
-const uploadPos = (date, normal, tax) =>{
+  const uploadPos = (date, normal, tax) =>{
     return new Promise(async(resolve, reject)=>{
         try {
-          console.log('SINI WOE '+normal)
-          if(normal == 'true'){
-            console.log('MENJALANKAN UPLOAD POS NORMAL')
-            await uploadPosNormal(date)
+          let stateNormal = true;
+          let stateTax = true;
+          let messageUpload = '';
+
+          if(normal == true){
+            const response = await uploadPosNormal(date);
+            if(response.state){
+              stateNormal = true;
+              messageUpload = response.message
+            }else{
+              stateNormal = false;
+              messageUpload = response.message
+            }
           }
+
           if(tax == true){
-            console.log('MENJALANKAN UPLOAD POS PAJAK')
-            
+            const response = {
+              state: true,
+              message: 'upload tax berhasil'
+            }
+
+            if(response.state){
+              stateTax = true;
+              if(messageUpload){
+                messageUpload = messageUpload+`\n ${response.message}`
+              }else{
+                messageUpload = response.message
+              }
+            }else{
+              stateTax = false;
+              if(messageUpload){
+                messageUpload = messageUpload+`\n ${response.message}`
+              }else{
+                messageUpload = response.message
+              }
+            }
+          } 
+          let finalState = true;
+
+          if(stateNormal && stateTax){
+            finalState = true;
+          }else{
+            finalState = false;
           }
-          resolve(true)
+
+          resolve({
+            state: finalState,
+            message: messageUpload
+          })
         } catch (err) {
-            reject(err);
+          reject(err);
         }
     });
-}
+  }
 
-const uploadPosNormal = (date) =>{
+  const uploadPosNormal = (date) =>{
   return new Promise(async(resolve, reject)=>{
     try {
       const getDate = convertDateFormat(date);
@@ -38,7 +77,6 @@ const uploadPosNormal = (date) =>{
     const selisih = summaryTotal - invoiceTotal.Total_all;
 
     if(selisih > 1000 || selisih < (-1000)){
-      console.log('anu')
       reject('selisih')
     }
 
@@ -147,16 +185,16 @@ const uploadPosNormal = (date) =>{
         saveXMLToFile('C:/upload_transaction/pos/normal', `RIHP_Ivc_${getDate}.xml`, ivcyXml);
     }
 
-    await uploadAllFiles('C:/upload_transaction/pos/normal/', config.urlPos, 'HP088', 1)
+    const uploadResult =  await uploadAllFiles('C:/upload_transaction/pos/normal/', config.urlPos, 'HP088', 1)
 
-    resolve(true);
+    resolve(uploadResult);
     } catch (err) {
       reject(err)
     }
   });
-}
+  }
 
-const generateDynamicXML = (data) => {
+  const generateDynamicXML = (data) => {
     const root = xmlbuilder.create('Dial_Stats')
       .ele('UK_Products_Pipeline');
   
@@ -201,7 +239,6 @@ const generateDynamicXML = (data) => {
     // Membaca isi direktori
     fs.readdir(directory, (err, files) => {
       if (err) {
-        console.error(`Error reading directory: ${err}`);
         return;
       }
   

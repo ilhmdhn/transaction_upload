@@ -1,6 +1,8 @@
 const { ipcMain, Tray, Menu, app, BrowserWindow } = require('electron');
 const path = require('path');
 const { uploadPos } = require('./src/data/generate_file');
+const {setDbNormal, getDbNormal, setDbTax, getDbTax, setOutlet, getOutlet} = require('./src/data/preferences');
+const db = require('./src/tools/db');
 
 const createWindow = () =>{
     const additionalData = { myKey: 'transaction_upload' }
@@ -37,38 +39,70 @@ const createWindow = () =>{
     const iconTray = path.join(__dirname, 'icon.png');
     const tray = new Tray(iconTray);
 
+    
+
+    
+    
+    win.webContents.on('did-finish-load', async () => {
+        
+    });
+
     ipcMain.on('UPLOAD-POS', async (event, data) => {
         try {
-            console.log(data)
             if(!data.date){
                 throw `Tanggal tidak valid ${data.date}`
             }
 
             showLoading()
-            const date =  data.date;
-            const normal =  data.normal;
-            const tax =  data.tax;
-            
-            await uploadPos(date, normal, tax)   
+            const response = await uploadPos(data.date, data.normal, data.tax)   
+
             closeLoading()
+            if(response.state){
+                showSuccessAlert('Berhasil', response.message)
+            }else{
+                showErrorAlert('Gagal', response.message)
+            }
         } catch (err) {
-            console.log(err)
+            showErrorAlert(err, err.message)
             closeLoading()
         }
     });
 
-    function delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+    const showNormalConfig = () =>{
+        const dbInfo = getDbNormal();
+        win.webContents.send('SHOW-DB-NORMAL', dbInfo);
+    }
+
+    const showTaxConfig = () =>{
+        const dbInfo = getDbTax();
+        win.webContents.send('SHOW-DB-TAX', dbInfo);
+    }
+
+    const showOutlet = () =>{
+        const outletInfo = getOutlet();
+        win.webContents.send('SHOW-OUTLET', outletInfo);
     }
 
     const showLoading = () =>{
-        console.log('show loading')
         win.webContents.send('SHOW-LOADING',true);
     }
     
     const closeLoading = () =>{
-        console.log('close loading')
         win.webContents.send('CLOSE-LOADING',{yaa: 'yaa'});
+    }
+
+    const showSuccessAlert = (title, message) =>{
+        win.webContents.send('SUCCESS', {
+            title: title,
+            message: message
+        });
+    }
+
+    const showErrorAlert = (title, message) =>{
+        win.webContents.send('FAILED', {
+            title: title,
+            message: message
+        });
     }
 }
 

@@ -572,7 +572,7 @@
                         <div class="col-6">
                             <div class="form-group">
                                 <label>Type</label>
-                                <input type="checkbox" id="type1" style="margin-left: 1em;" value="1" checked> Normal
+                                <input type="checkbox" id="type1" style="margin-left: 1em;" value="1"> Normal
                                 <input type="checkbox" id="type2" style="margin-left: 1em;" value="2"> Pajak
                             </div>
                         </div>
@@ -619,10 +619,6 @@
 <script>
     const { ipcRenderer } = require('electron');
 
-    const datePick = document.getElementById('tanggal');
-    const normalState = document.getElementById("type1").checked;
-    const taxState = document.getElementById("type2").checked;
-
     ipcRenderer.on('SHOW-LOADING', (event, data)=>{
          showLoading()
          return
@@ -641,10 +637,14 @@
     });
 
     const upPos = async () => {
+        const normalState = document.getElementById("type1").checked;
+        const taxState = document.getElementById("type2").checked;
+        const datePick = document.getElementById('tanggal');
+        
         ipcRenderer.send('UPLOAD-POS', {
             date: `${datePick.value}`,
-            normal: `${normalState}`,
-            tax: `${taxState}`,
+            normal: normalState,
+            tax: taxState,
         });
     }
 

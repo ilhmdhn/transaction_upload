@@ -17,30 +17,29 @@ function getFilePathsFromDirectory(directory) {
     });
   }
   
-  // Fungsi untuk mengupload file menggunakan Axios dengan data JSON
   async function uploadFiles(files, uploadUrl, outlet, type) {
-    try {
-      const form = new FormData();
-  
-      files.forEach(filePath => {
-        form.append('myFile[]', fs.createReadStream(filePath));
-      });
-  
-      form.append('outlet', outlet);
-      form.append('type', type);
-  
-      const response = await axios.post(uploadUrl, form, {
-        headers: {
-          ...form.getHeaders(),
-        },
-      });
-  
-      console.log('Files uploaded successfully.');
-      return response.data;
-    } catch (error) {
-      console.error('Error uploading files:', error);
-      throw error;
-    }
+    return new Promise(async(resolve, reject)=>{
+      try {
+        const form = new FormData();
+    
+        files.forEach(filePath => {
+          form.append('myFile[]', fs.createReadStream(filePath));
+        });
+    
+        form.append('outlet', outlet);
+        form.append('type', type);
+    
+        const response = await axios.post(uploadUrl, form, {
+          headers: {
+            ...form.getHeaders(),
+          },
+        });
+    
+        resolve(response.data);
+      } catch (error) {
+        reject(error)
+      }
+    })
   }
   
   // Fungsi utama untuk mendapatkan path file dan menguploadnya
@@ -48,9 +47,8 @@ function getFilePathsFromDirectory(directory) {
     return new Promise(async(resolve, reject)=>{
       try {
         const files = await getFilePathsFromDirectory(directory);
-        const results = await uploadFiles(files, uploadUrl, outlet, type);
-        console.log('All files uploaded successfully:', results);
-        resolve(true)
+        const results =  uploadFiles(files, uploadUrl, outlet, type);
+        resolve(results)
       } catch (error) {
         reject(error)
       }
