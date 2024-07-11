@@ -44,7 +44,9 @@ const createWindow = () =>{
     
     
     win.webContents.on('did-finish-load', async () => {
-        
+        showNormalConfig()
+        showTaxConfig()
+        showOutlet();
     });
 
     ipcMain.on('UPLOAD-POS', async (event, data) => {
@@ -69,8 +71,13 @@ const createWindow = () =>{
     });
 
     ipcMain.on('SAVE-NORMAL', async (event, data) => {
-        console.log('KO KENE')
+        setDbNormal(data.ip, data.user, data.pass, data.db)
         showNormalConfig()
+    });
+
+    ipcMain.on('SAVE-TAX', async (event, data) => {
+        setDbTax(data.ip, data.user, data.pass, data.db)
+        showTaxConfig()
     });
 
     ipcMain.on('SAVE-OUTLET', async (event, data) => {
@@ -80,7 +87,6 @@ const createWindow = () =>{
 
     const showNormalConfig = () =>{
         const dbInfo = getDbNormal();
-        console.log(dbInfo)
         win.webContents.send('SHOW-DB-NORMAL', dbInfo);
     }
 
@@ -95,11 +101,11 @@ const createWindow = () =>{
     }
 
     const showLoading = () =>{
-        win.webContents.send('SHOW-LOADING',true);
+        win.webContents.send('SHOW-LOADING');
     }
     
     const closeLoading = () =>{
-        win.webContents.send('CLOSE-LOADING',{yaa: 'yaa'});
+        win.webContents.send('CLOSE-LOADING');
     }
 
     const showSuccessAlert = (title, message) =>{

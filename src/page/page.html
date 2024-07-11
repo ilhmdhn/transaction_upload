@@ -440,6 +440,9 @@
                                 <input type="text" class="form-control" id="tf_outlet"
                                     style="margin-bottom: -0.5em; height: fit-content; font-size: 15px; padding: 2px;">
                             </div>
+                            <div class="col-2">
+                                <input type="button" id="sm-out" class="btn-save" onclick="svOut()" value="Simpan">
+                            </div>
                         </div>
                     </div>
                     <br>
@@ -523,7 +526,7 @@
                                     <div class="col-3">
                                     </div>
                                     <div class="col-12">
-                                        <input type="button" id="sm-pj" class="btn-save" onclick="svPjk()"
+                                        <input type="button" id="sm-pj" class="btn-save" onclick="svTax()"
                                             value="Simpan">
                                     </div>
                                 </div>
@@ -646,6 +649,18 @@
         userNormal.value = data.user;
         passNormal.value = data.pass;
         dbNormal.value = data.db;
+    });
+
+    ipcRenderer.on('SHOW-DB-TAX', (event, data)=>{
+        const ipTax = document.getElementById('ip_pajak');
+        const userTax = document.getElementById('user_pajak');
+        const passTax = document.getElementById('pass_pajak');
+        const dbTax = document.getElementById('db_pajak');
+
+        ipTax.value = data.ip;
+        userTax.value = data.user;
+        passTax.value = data.pass;
+        dbTax.value = data.db;
     })
     
     ipcRenderer.on('SHOW-OUTLET', (event, data)=>{
@@ -653,13 +668,38 @@
         tfOutlet.value = data;
     });
 
-    const saveOutlet = () =>{
-        const tfOutlet = document.getElementById('tf_outlet');
-        ipcRenderer.send('SAVE-OUTLET', tfOutlet.value);
+    const svOut = () =>{
+        const tfOutlet = document.getElementById('tf_outlet').value;
+
+        ipcRenderer.send('SAVE-OUTLET', tfOutlet);
     }
 
     const svNor = () =>{
-        ipcRenderer.send('SAVE-NORMAL');
+        const ipNormal = document.getElementById('ip_normal');
+        const userNormal = document.getElementById('user_normal');
+        const passNormal = document.getElementById('pass_normal');
+        const dbNormal = document.getElementById('db_normal');
+        
+        ipcRenderer.send('SAVE-NORMAL', {
+            ip: ipNormal.value,
+            user: userNormal.value,
+            pass: passNormal.value,
+            db: dbNormal.value
+        });
+    }
+
+    const svTax = () =>{
+        const ipTax = document.getElementById('ip_pajak');
+        const userTax = document.getElementById('user_pajak');
+        const passTax = document.getElementById('pass_pajak');
+        const dbTax = document.getElementById('db_pajak');
+        success_alert(ipTax.value, userTax.value)
+        ipcRenderer.send('SAVE-TAX', {
+            ip: ipTax.value,
+            user: userTax.value,
+            pass: passTax.value,
+            db: dbTax.value
+        });
     }
 
     const upPos = async () => {
@@ -675,9 +715,7 @@
     }
 
     const upMinimart = async () => {
-
         failed_alert();
-
     }
 
     function success_alert(title, message) {
