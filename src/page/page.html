@@ -538,25 +538,25 @@
                                         Versi
                                     </div>
                                     <div class="col-9">
-                                        <input type="text" name="mc_version" style="padding: 2px; font-size: 12px;"
+                                        <input type="text" id="mc_version" style="padding: 2px; font-size: 12px;"
                                             readonly>
                                     </div>
                                     <div class="col-3">
                                         Versi terbaru
                                     </div>
                                     <div class="col-9">
-                                        <input type="text" name="new_version" style="padding: 2px; font-size: 12px;"
+                                        <input type="text" id="mc_new" style="padding: 2px; font-size: 12px;"
                                             readonly>
                                     </div>
                                     <div class="col-3">
                                         Last Sync
                                     </div>
                                     <div class="col-9">
-                                        <input type="text" name="pass_pajak" style="padding: 2px; font-size: 12px;"
+                                        <input type="text" id="mc_sync" style="padding: 2px; font-size: 12px;"
                                             readonly>
                                     </div>
                                     <div class="col-12">
-                                        <textarea name="log" rows="4" class="form-control" readonly></textarea>
+                                        <textarea id="log" rows="4" class="form-control" readonly></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -668,6 +668,16 @@
         tfOutlet.value = data;
     });
 
+    ipcRenderer.on('SHOW-MC', (event, data)=>{
+        const mcVersion =  document.getElementById('mc_version');
+        const mcNew =  document.getElementById('mc_new');
+        const mcSync =  document.getElementById('mc_sync');
+        
+        mcVersion.value = data.mcVersion;            
+        mcNew.value = data.mcNew;                
+        mcSync.value = data.mcSync;            
+    });
+
     const svOut = () =>{
         const tfOutlet = document.getElementById('tf_outlet').value;
 
@@ -693,7 +703,6 @@
         const userTax = document.getElementById('user_pajak');
         const passTax = document.getElementById('pass_pajak');
         const dbTax = document.getElementById('db_pajak');
-        success_alert(ipTax.value, userTax.value)
         ipcRenderer.send('SAVE-TAX', {
             ip: ipTax.value,
             user: userTax.value,
@@ -749,7 +758,6 @@
 
     function ani() {
         document.getElementById('new-box').classList.add('hide');
-        delay(2000);
         document.getElementById('container-modal').style.display = 'none';
     }
 

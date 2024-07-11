@@ -6,6 +6,8 @@
   const { getInventory, getRoomType, getUser, getMember, getReservation, getRcp, getOkl, getOkd, getOkdPromo, getOcd, getOcl, getOcdPromo, getSul, getSud, getDetailPromo, getCashSummaryDetail, getIvc, getTotalPay, getTotalInvoice, cekSummaryCashBalance } = require("./data");
   const uploadAllFiles = require('../network/upload');
   const config = require('./config');
+  const { getOutlet } = require('./preferences');
+  const { getTotalPayTax, getTotalInvoiceTax, cekSummaryCashBalanceTax, getInventoryTax, getRoomTypeTax, getUserTax, getMemberTax, getReservationTax, getRcpTax, getOklTax, getOkdTax, getOkdPromoTax, getOclTax, getOcdTax, getOcdPromoTax, getSulTax, getSudTax, getDetailPromoTax, getCashSummaryDetailTax, getRoomTax, getIvcTax, searchTax} = require('./data_tax')
 
   const uploadPos = (date, normal, tax) =>{
     return new Promise(async(resolve, reject)=>{
@@ -26,10 +28,8 @@
           }
 
           if(tax == true){
-            const response = {
-              state: true,
-              message: 'upload tax berhasil'
-            }
+            
+            const response = await uploadPosTax(date)
 
             if(response.state){
               stateTax = true;
@@ -192,6 +192,137 @@
       reject(err)
     }
   });
+  }
+
+  const uploadPosTax = (date) =>{
+    return new Promise(async(resolve, reject)=>{
+      try {
+        const getDate = convertDateFormat(date);
+  
+      deleteFilesInDirectory('C:/upload_transaction/pos/tax');
+      const summaryTotal = await getTotalPayTax(date);
+      const invoiceTotal = await getTotalInvoiceTax(date);
+  
+      const selisih = summaryTotal - invoiceTotal.Total_all;
+  
+      if(selisih > 1000 || selisih < (-1000)){
+        reject('selisih')
+      }
+  
+      await cekSummaryCashBalanceTax(date);
+  
+      const inventoryData = await getInventoryTax(date);
+      if(inventoryData.length >0){
+          const inventoryXml = generateDynamicXML(inventoryData);
+          saveXMLToFile('C:/upload_transaction/pos/tax', `AIHP_Inventory_${getDate}.xml`, inventoryXml);
+      }
+      
+      const roomTypeData = await getRoomTypeTax(date);
+      if(roomTypeData.length >0){
+          const roomTypeXml = generateDynamicXML(roomTypeData);
+          saveXMLToFile('C:/upload_transaction/pos/tax', `BIHP_Jenis_Kamar_${getDate}.xml`, roomTypeXml);
+      }
+      
+      
+      const userData = await getUserTax();
+      if(userData.length >0){
+          const userXml = generateDynamicXML(userData);
+          saveXMLToFile('C:/upload_transaction/pos/tax', `CIHP_User_${getDate}.xml`, userXml);
+      }
+      
+      const memberData = await getMemberTax(date);
+      if(memberData.length >0){
+          const memberXml = generateDynamicXML(memberData);
+          saveXMLToFile('C:/upload_transaction/pos/tax', `DIHP_Mbr_${getDate}.xml`, memberXml);
+      }
+  
+      const reservationData = await getReservationTax(date);
+      if(reservationData.length >0){
+          const reservationXml = generateDynamicXML(reservationData);
+          saveXMLToFile('C:/upload_transaction/pos/tax', `EIHP_Rsv_${getDate}.xml`, reservationXml);
+      }
+  
+      const rcpData = await getRcpTax(date);
+      if(rcpData.length >0){
+          const rcpXml = generateDynamicXML(rcpData);
+          saveXMLToFile('C:/upload_transaction/pos/tax', `FIHP_Rcp_${getDate}.xml`, rcpXml);
+      }
+  
+      const oklData = await getOklTax(date);
+      if(oklData.length >0){
+          const oklXml = generateDynamicXML(oklData);
+          saveXMLToFile('C:/upload_transaction/pos/tax', `GIHP_Okl_${getDate}.xml`, oklXml);
+      }
+  
+      const okdData = await getOkdTax(date);
+      if(okdData.length >0){
+          const okdXml = generateDynamicXML(okdData);
+          saveXMLToFile('C:/upload_transaction/pos/tax', `HIHP_Okd_${getDate}.xml`, okdXml);
+      }
+      
+      const okdPromoData = await getOkdPromoTax(date);
+      if(okdPromoData.length >0){
+          const okdPromoXml = generateDynamicXML(okdPromoData);
+          saveXMLToFile('C:/upload_transaction/pos/tax', `IIHP_Okd_Promo_${getDate}.xml`, okdPromoXml);
+      }
+  
+      const oclData = await getOclTax(date);
+      if(oclData.length >0){
+          const oclXml = generateDynamicXML(oclData);
+          saveXMLToFile('C:/upload_transaction/pos/tax', `JIHP_Ocl_${getDate}.xml`, oclXml);
+      }
+  
+      const ocdData = await getOcdTax(date);
+      if(ocdData.length >0){
+          const ocdXml = generateDynamicXML(ocdData);
+          saveXMLToFile('C:/upload_transaction/pos/tax', `KIHP_Ocd_${getDate}.xml`, ocdXml);
+      }
+  
+      const ocdPromoData = await getOcdPromoTax(date);
+      if(ocdPromoData.length >0){
+          const ocdPromoXml = generateDynamicXML(ocdPromoData);
+          saveXMLToFile('C:/upload_transaction/pos/tax', `LIHP_Ocd_Promo_${getDate}.xml`, ocdPromoXml);
+      }
+  
+      const sulData = await getSulTax(date);
+      if(sulData.length >0){
+          const sulXml = generateDynamicXML(sulData);
+          saveXMLToFile('C:/upload_transaction/pos/tax', `MIHP_Sul_${getDate}.xml`, sulXml);
+      }
+  
+      const sudData = await getSudTax(date);
+      if(sudData.length >0){
+          const sudXml = generateDynamicXML(sudData);
+          saveXMLToFile('C:/upload_transaction/pos/tax', `NIHP_Sud_${getDate}.xml`, sudXml);
+      }
+  
+      const detailPromoData = await getDetailPromoTax(date);
+      if(detailPromoData.length >0){
+          const detailPromoXml = generateDynamicXML(detailPromoData);
+          saveXMLToFile('C:/upload_transaction/pos/tax', `OIHP_Detail_Promo_${getDate}.xml`, detailPromoXml);
+      }
+  
+      const cashSummaryData = await getCashSummaryDetailTax(date);
+      if(cashSummaryData.length >0){
+          const cashSummaryXml = generateDynamicXML(cashSummaryData);
+          saveXMLToFile('C:/upload_transaction/pos/tax', `PIHP_Cash_Summary_Detail_${getDate}.xml`, cashSummaryXml);
+      }
+  
+      const ivcData = await getIvcTax(date);
+      if(ivcData.length >0){
+          const ivcyXml = generateDynamicXML(ivcData);
+          saveXMLToFile('C:/upload_transaction/pos/tax', `RIHP_Ivc_${getDate}.xml`, ivcyXml);
+      }
+  
+
+      const outlet = getOutlet()
+      const uploadResult =  await uploadAllFiles('C:/upload_transaction/pos/tax/', config.urlPos, outlet, 2)
+  
+      resolve(uploadResult);
+      } catch (err) {
+        reject(err)
+      }
+    });
   }
 
   const generateDynamicXML = (data) => {

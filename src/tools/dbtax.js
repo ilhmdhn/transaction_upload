@@ -1,6 +1,6 @@
-const {getDbNormal} = require('../data/preferences');
+const {getDbTax} = require('../data/preferences');
+const db = getDbTax()
 
-const db = getDbNormal()
 module.exports = {
         user: db.user,
         password: db.pass,

@@ -3,6 +3,8 @@ const path = require('path');
 const { uploadPos } = require('./src/data/generate_file');
 const {setDbNormal, getDbNormal, setDbTax, getDbTax, setOutlet, getOutlet} = require('./src/data/preferences');
 const db = require('./src/tools/db');
+const { default: axios } = require('axios');
+const config = require('./src/data/config');
 
 const createWindow = () =>{
     const additionalData = { myKey: 'transaction_upload' }
@@ -47,6 +49,7 @@ const createWindow = () =>{
         showNormalConfig()
         showTaxConfig()
         showOutlet();
+        mcInfo()
     });
 
     ipcMain.on('UPLOAD-POS', async (event, data) => {
@@ -120,6 +123,22 @@ const createWindow = () =>{
             title: title,
             message: message
         });
+    }
+
+    const mcInfo = async() =>{
+        try {
+            const outlet = getOutlet()
+            const response = await axios.get(config.mcInfo+outlet);
+            if(response.data.state){
+                win.webContents.send('SHOW-MC',{
+                    mcVersion: response.data.versi,
+                    mcNew: response.data.latest_version,
+                    mcSync: response.data.last_sync,
+                });
+            }   
+        } catch (err) {
+            console.log(err)
+        }
     }
 }
 
