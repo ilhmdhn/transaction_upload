@@ -204,25 +204,25 @@ const getInventory = (date) => {
                         AND Inventory IN (
                             SELECT DISTINCT Inventory 
                             FROM IHP_Okd 
-                    WHERE 
-                        OrderPenjualan IN (
-                            SELECT 
-                                OrderPenjualan 
-                            FROM 
-                                IHP_Okl 
-                            WHERE 
-                                Reception IN (
-                                    SELECT 
-                                        Reception 
-                                    FROM 
-                                        IHP_Rcp 
-                                    WHERE 
-                                        CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
-                                    AND 
-                                        Complete = '1'
+                        WHERE 
+                            OrderPenjualan IN (
+                                SELECT 
+                                    OrderPenjualan 
+                                FROM 
+                                    IHP_Okl 
+                                WHERE 
+                                    Reception IN (
+                                        SELECT 
+                                            Reception 
+                                        FROM 
+                                            IHP_Rcp 
+                                        WHERE 
+                                            CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
+                                        AND 
+                                            Complete = '1'
+                                    )
                                 )
                             )
-                        )
                     ORDER BY 
                         Inventory ASC
             `;

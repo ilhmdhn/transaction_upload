@@ -1,4 +1,4 @@
-const execute = require('../tools/query-executor');
+const execute = require('../tools/query-executor-tax');
 const encrypt = require('../tools/encrypt');
 const decrypt = require('../tools/decrypt');
 const moment = require('moment');

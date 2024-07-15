@@ -60,6 +60,7 @@
             message: messageUpload
           })
         } catch (err) {
+          console.log(err)
           reject(err);
         }
     });
@@ -184,8 +185,8 @@
         const ivcyXml = generateDynamicXML(ivcData);
         saveXMLToFile('C:/upload_transaction/pos/normal', `RIHP_Ivc_${getDate}.xml`, ivcyXml);
     }
-
-    const uploadResult =  await uploadAllFiles('C:/upload_transaction/pos/normal/', config.urlPos, 'HP088', 1)
+    const outlet = getOutlet()
+    const uploadResult =  await uploadAllFiles('C:/upload_transaction/pos/normal/', config.urlPos, outlet, 1)
 
     resolve(uploadResult);
     } catch (err) {
@@ -324,20 +325,21 @@
       }
     });
   }
-
+  
   const generateDynamicXML = (data) => {
     const root = xmlbuilder.create('Dial_Stats')
       .ele('UK_Products_Pipeline');
-  
     data.forEach(item => {
-      const ihp = root.ele('ihp');
-      Object.keys(item).forEach(key => {
-        if(!item[key] && (item[key] != 0)){
-          ihp.ele(key, '');
-        }else{
-          ihp.ele(key, item[key]);
-        }
-      });
+      if(item){
+        const ihp = root.ele('ihp');
+        Object.keys(item).forEach(key => {
+          if(!item[key] && (item[key] != 0)){
+            ihp.ele(key, '');
+          }else{
+            ihp.ele(key, item[key]);
+          }
+        }); 
+      }
     });
   
     return root.end({ pretty: true, allowEmpty: true });
