@@ -33,7 +33,9 @@
 
             if(response.state){
               stateTax = true;
-              if(messageUpload){
+              if(response.message == messageUpload){
+                messageUpload = messageUpload;
+              }else if(messageUpload){
                 messageUpload = messageUpload+`\n ${response.message}`
               }else{
                 messageUpload = response.message

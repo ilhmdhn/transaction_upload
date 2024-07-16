@@ -9,7 +9,7 @@ const config = require('./src/data/config');
 const createWindow = () =>{
     const additionalData = { myKey: 'transaction_upload' }
     const gotTheLock = app.requestSingleInstanceLock(additionalData);
-
+    const outlet = getOutlet()
     if (!gotTheLock) {
         app.isQuiting = true;
         app.quit();
@@ -18,11 +18,14 @@ const createWindow = () =>{
     }
 
     const win = new BrowserWindow({
-        width: 1280,
-        height: 720,
+        // width: 1020,
+        // height: 690,
+        resizable: false,
+        minWidth: 1020,
+        minHeight: 690,
         show: true,
         icon: path.join(__dirname, '/icon.png'),
-        title: "Member Client",
+        title: "Program Upload",
         autoHideMenuBar: true,
         webPreferences: {
             nodeIntegration: true,
@@ -49,8 +52,10 @@ const createWindow = () =>{
         showNormalConfig()
         showTaxConfig()
         showOutlet();
-        mcInfo();
-        uploadHistory();
+        if(outlet){
+            mcInfo();
+            uploadHistory();
+        }
     });
 
     ipcMain.on('UPLOAD-POS', async (event, data) => {
@@ -65,10 +70,10 @@ const createWindow = () =>{
             closeLoading()
             if(response.state){
                 showSuccessAlert('Berhasil', response.message)
-                uploadHistory();
             }else{
                 showErrorAlert('Gagal', response.message)
             }
+            uploadHistory();
         } catch (err) {
             showErrorAlert(err, err.message)
             closeLoading()
@@ -76,13 +81,17 @@ const createWindow = () =>{
     });
 
     ipcMain.on('SAVE-NORMAL', async (event, data) => {
+        showLoading()
         setDbNormal(data.ip, data.user, data.pass, data.db)
         showNormalConfig()
+        closeLoading()
     });
 
     ipcMain.on('SAVE-TAX', async (event, data) => {
+        showLoading()
         setDbTax(data.ip, data.user, data.pass, data.db)
         showTaxConfig()
+        closeLoading()
     });
 
     ipcMain.on('SAVE-OUTLET', async (event, data) => {
@@ -101,8 +110,7 @@ const createWindow = () =>{
     }
 
     const showOutlet = () =>{
-        const outletInfo = getOutlet();
-        win.webContents.send('SHOW-OUTLET', outletInfo);
+        win.webContents.send('SHOW-OUTLET', outlet);
     }
 
     const showLoading = () =>{
@@ -129,7 +137,6 @@ const createWindow = () =>{
 
     const mcInfo = async() =>{
         try {
-            const outlet = getOutlet()
             const response = await axios.get(config.mcInfo+outlet);
             if(response.data.state){
                 win.webContents.send('SHOW-MC',{
@@ -145,7 +152,6 @@ const createWindow = () =>{
 
     const uploadHistory = async() =>{
         try {
-            const outlet = getOutlet()
             const response = await axios.get(config.history+outlet);
             if(response.data.state){
                 const log = [];
