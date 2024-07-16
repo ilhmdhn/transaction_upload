@@ -390,10 +390,6 @@
         font-family: Tahoma, Arial;
     }
 
-    .col-3, .col-6, .col-9, .col-12 {
-        margin-bottom: -1.5vh; /* Adjust this value to decrease spacing */
-    }
-
     @-webkit-keyframes loading {
         from {
             -ms-transform: rotate(0deg);
@@ -744,8 +740,8 @@
     }
 
     const upMinimart = async () => {
-        failed_alert('Tidak tersedia', 'Fitur ini masih dalam pengembangan');
-        // addError('AAAA')
+        // failed_alert();
+        addError('AAAA')
     }
 
     function success_alert(title, message) {
@@ -772,11 +768,9 @@
         // Failed
         container.style.display = 'block';
         alert.classList.remove('hide');
-        alert_head.innerText = title?title:'';
-        alert_body.innerText = message?message:'';
+        alert_head.innerText = title;
+        alert_body.innerText = message;
         button.style.background = '#F65656';
-        const errorMessage = `Error ${title?`${title}: `:''}${message?message:''}`;
-        addError(errorMessage)
     }
 
     function ani() {

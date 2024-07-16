@@ -49,7 +49,8 @@ const createWindow = () =>{
         showNormalConfig()
         showTaxConfig()
         showOutlet();
-        mcInfo()
+        mcInfo();
+        uploadHistory();
     });
 
     ipcMain.on('UPLOAD-POS', async (event, data) => {
@@ -64,6 +65,7 @@ const createWindow = () =>{
             closeLoading()
             if(response.state){
                 showSuccessAlert('Berhasil', response.message)
+                uploadHistory();
             }else{
                 showErrorAlert('Gagal', response.message)
             }
@@ -140,6 +142,22 @@ const createWindow = () =>{
             console.log(err)
         }
     }
+
+    const uploadHistory = async() =>{
+        try {
+            const outlet = getOutlet()
+            const response = await axios.get(config.history+outlet);
+            if(response.data.state){
+                const log = [];
+                response.data.data.forEach(element => {
+                    log.push(`${element.date}: ${element.type == 1?'NORMAL':'P  A J A  K'} ${element.date_trans}`);
+                });
+                win.webContents.send('UPLOAD-HISTORY', log);               
+            }   
+        } catch (err) {
+            
+        }
+     }
 }
 
 app.whenReady().then(() => {
