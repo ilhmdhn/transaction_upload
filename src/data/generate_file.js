@@ -3,7 +3,7 @@
   const xmlbuilder = require('xmlbuilder');
   const moment = require('moment');
 
-  const { getInventory, getRoomType, getUser, getMember, getReservation, getRcp, getOkl, getOkd, getOkdPromo, getOcd, getOcl, getOcdPromo, getSul, getSud, getDetailPromo, getCashSummaryDetail, getIvc, getTotalPay, getTotalInvoice, cekSummaryCashBalance } = require("./data");
+  const { getInventory, getRoomType, getUser, getMember, getReservation, getRcp, getOkl, getOkd, getOkdPromo, getOcd, getOcl, getOcdPromo, getSul, getSud, getDetailPromo, getCashSummaryDetail, getRoom, getIvc, getTotalPay, getTotalInvoice, cekSummaryCashBalance } = require("./data");
   const uploadAllFiles = require('../network/upload');
   const config = require('./config');
   const { getOutlet } = require('./preferences');
@@ -180,6 +180,12 @@
         saveXMLToFile('C:/upload_transaction/pos/normal', `PIHP_Cash_Summary_Detail_${getDate}.xml`, cashSummaryXml);
     }
 
+    const roomData = await getRoom(date);
+    if(roomData.length >0){
+        const roomXml = generateDynamicXML(roomData);
+        saveXMLToFile('C:/upload_transaction/pos/normal', `QIHP_Room_${getDate}.xml`, roomXml);
+    }
+
     const ivcData = await getIvc(date);
     if(ivcData.length >0){
         const ivcyXml = generateDynamicXML(ivcData);
@@ -302,17 +308,23 @@
           const detailPromoXml = generateDynamicXML(detailPromoData);
           saveXMLToFile('C:/upload_transaction/pos/tax', `OIHP_Detail_Promo_${getDate}.xml`, detailPromoXml);
       }
-  
+  /*
       const cashSummaryData = await getCashSummaryDetailTax(date);
       if(cashSummaryData.length >0){
           const cashSummaryXml = generateDynamicXML(cashSummaryData);
           saveXMLToFile('C:/upload_transaction/pos/tax', `PIHP_Cash_Summary_Detail_${getDate}.xml`, cashSummaryXml);
       }
-  
+*/
+      const roomData = await getRoomTax(date);
+      if(roomData.length >0){
+          const roomXml = generateDynamicXML(roomData);
+          saveXMLToFile('C:/upload_transaction/pos/tax', `PIHP_Room_${getDate}.xml`, roomXml);
+      }
+
       const ivcData = await getIvcTax(date);
       if(ivcData.length >0){
           const ivcyXml = generateDynamicXML(ivcData);
-          saveXMLToFile('C:/upload_transaction/pos/tax', `RIHP_Ivc_${getDate}.xml`, ivcyXml);
+          saveXMLToFile('C:/upload_transaction/pos/tax', `QIHP_Ivc_${getDate}.xml`, ivcyXml);
       }
   
 

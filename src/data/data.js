@@ -238,7 +238,8 @@ const getInventory = (date) => {
             const dataInventory = await execute(queryData);
 
             dataInventory.forEach((element)=>{
-                if(element.Inventory == ''){
+                if((element.Inventory).trim() == '' || (!element.Inventory)){
+                    console.log('WOEEEE')
                     reject(`Item ${element.Nama} Tidak ada ID Global`)
                 }
                 listInventory.push({
@@ -298,7 +299,23 @@ const getRoomType = (date) =>{
                 return;
         }
             const dataRoomType = await execute(queryData);
-            resolve(dataRoomType);
+
+            const result = [];
+
+            dataRoomType.forEach((element)=>{
+                result.push({
+                    Nama_Kamar: element.Nama_Kamar,
+                    Hari: element.Hari,
+                    Time_Start: element.Time_Start,
+                    Time_Finish: element.Time_Finish,
+                    Overpax: element.Overpax,
+                    Tarif: element.Tarif,
+                    CHTime: element.CHTimeTgl + ' ' +element.CHTimeJam,
+                    Chusr: element.Chusr,
+                });
+            })
+
+            resolve(result);
         } catch (err) {
             reject(err)
         }
@@ -556,6 +573,9 @@ const getOkd = (date) => {
             const result = await execute(query);
 
             result.forEach((element)=>{
+                if((element.Inventory).trim() == '' || (!element.Inventory)){
+                    reject(`Item ${element.Nama} Tidak ada ID Global`)
+                }
                 item.push(
                     {
                         OrderPenjualan: element.OrderPenjualan,

@@ -298,6 +298,24 @@ const getRoomTypeTax = (date) =>{
                 return;
         }
             const dataRoomType = await execute(queryData);
+
+            const result = [];
+
+            dataRoomType.forEach((element)=>{
+                result.push({
+                    Nama_Kamar: element.Nama_Kamar,
+                    Hari: element.Hari,
+                    Time_Start: element.Time_Start,
+                    Time_Finish: element.Time_Finish,
+                    Overpax: element.Overpax,
+                    Tarif: element.Tarif,
+                    CHTime: element.CHTimeTgl + ' ' +element.CHTimeJam,
+                    Chusr: element.Chusr,
+                });
+            })
+
+            resolve(result);
+
             resolve(dataRoomType);
         } catch (err) {
             reject(err)
