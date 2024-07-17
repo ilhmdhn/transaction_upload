@@ -239,7 +239,6 @@ const getInventory = (date) => {
 
             dataInventory.forEach((element)=>{
                 if((element.Inventory).trim() == '' || (!element.Inventory)){
-                    console.log('WOEEEE')
                     reject(`Item ${element.Nama} Tidak ada ID Global`)
                 }
                 listInventory.push({
@@ -540,6 +539,9 @@ const getOkl = (date) => {
 const getOkd = (date) => {
     return new Promise(async (resolve, reject) => {
         try {
+            
+            await cleanOkd(date)
+
             let query = `
                 SET DateFormat DMY;
                 SELECT 
@@ -589,6 +591,183 @@ const getOkd = (date) => {
                 )
             });
             resolve(item);            
+        } catch (err) {
+            reject(err)
+        }
+    })
+}
+
+const cleanOkd = (date) =>{
+    return new Promise(async(resolve, reject)=>{
+        try {
+            const queryCheck1 = `
+                SET DATEFORMAT DMY;
+                SELECT 
+                    s.orderpenjualan AS orderpenjualane, 
+                    s.Nama AS namae, 
+                    s.qty AS qtye,
+                    s.Inventory AS Inventorye, 
+                    s.Price AS Pricee, 
+                    s.Total AS Totale,
+                    s.Status AS Statuse, 
+                    s.Location AS Locatione, 
+                    s.Printed AS Printede,
+                    s.Note AS Notee, 
+                    s.SlipOrder AS SlipOrdere, 
+                    ISNULL(s.ID_COOKER, '') AS ID_COOKERe
+                FROM 
+                    IHP_OKD s
+                JOIN 
+                    (SELECT 
+                        orderpenjualan, 
+                        Nama, 
+                        inventory, 
+                        SlipOrder
+                    FROM 
+                        IHP_OKD t
+                    GROUP BY 
+                        orderpenjualan, 
+                        Nama, 
+                        inventory, 
+                        SlipOrder
+                    HAVING COUNT(*) > 1) t 
+                ON s.orderpenjualan = t.orderpenjualan 
+                    AND 
+                        s.Nama = t.Nama
+                WHERE 
+                    s.OrderPenjualan IN (
+                        SELECT 
+                            OrderPenjualan
+                        FROM 
+                            IHP_OKL
+                        WHERE 
+                            reception IN (
+                                SELECT 
+                                    Reception
+                                FROM 
+                                    IHP_Rcp
+                                WHERE 
+                                    CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
+                                AND 
+                                    Complete = '1'
+                    )
+                );`;
+
+            const checkFirstResult = await execute(queryCheck1);
+            for(let i = 0; i<checkFirstResult.length; i++){
+                const data = checkFirstResult[i];
+                const orderCodeFirst = data.orderpenjualane;
+                const itemNameFirst =  data.namae
+                const inventoryFirst = data.Inventorye;
+                const soFirst = data.SlipOrdere;
+                for(let j = 0; j<checkFirstResult.length; j++){
+                    const dataSecond = checkFirstResult[j];
+                    const orderCodeSecond = dataSecond.orderpenjualane;
+                    const itemNameSecond =  dataSecond.namae
+                    const inventorySecond = dataSecond.Inventorye;
+                    const soSecond = dataSecond.SlipOrdere;
+                    if(
+                        i != j &&
+                        orderCodeFirst == orderCodeSecond &&
+                        itemNameFirst == itemNameSecond &&
+                        inventoryFirst == inventorySecond &&
+                        soFirst == soSecond
+                    ){
+                        const queryDelete = `
+                            DELETE FROM 
+                                IHP_OKD 
+                            WHERE 
+                                OrderPenjualan = '${orderCodeFirst}' 
+                            AND 
+                                Nama = '${itemNameFirst}' 
+                            AND 
+                                Inventory = '${inventoryFirst}';
+                    `;
+                        await execute(queryDelete)
+                    const queryReinsert = `
+                        INSERT INTO IHP_Okd (
+                            OrderPenjualan, 
+                            Inventory, 
+                            Nama, 
+                            Price, 
+                            Qty, 
+                            Total, 
+                            Status, 
+                            Location, 
+                            Printed, 
+                            SlipOrder, 
+                            Note, 
+                            ID_COOKER
+                        ) VALUES (
+                            '${orderCodeFirst}', 
+                            '${data.Inventorye}', 
+                            '${itemNameFirst}', 
+                            ${Math.round(data.Pricee)}, 
+                            ${data.qtye}, 
+                            ${Math.round(harga * jumlahBarang)}, 
+
+                            '${data.Statuse}', 
+                            ${data.Locatione}, 
+                            ${data.Printede}, 
+                            '${soFirst}', 
+                            '${data.Notee}', 
+                            '${data.ID_COOKERe}'
+                        );
+                    `;
+                    await execute(queryReinsert);
+                    }
+                }
+
+            }
+
+
+            //CEK MASTER
+            const queryListCheck = `
+                SET DATEFORMAT DMY;
+                SELECT 
+                    Inventory, Nama 
+                FROM 
+                    IHP_Okd
+                WHERE 
+                    OrderPenjualan IN (
+                        SELECT 
+                            OrderPenjualan 
+                        FROM 
+                            IHP_OKL 
+                        WHERE 
+                            IHP_OKL.Reception IN (
+                                SELECT 
+                                    Rcp.Reception 
+                                FROM 
+                                    IHP_Rcp Rcp, 
+                                    IHP_Ivc 
+                                WHERE 
+                                    CONVERT(CHAR(10), Rcp.DATE_TRANS, 120) = '${date}'
+                                AND 
+                                    Complete = '1'
+                                AND 
+                                    Rcp.Reception = IHP_Ivc.Reception 
+                                AND 
+                                    Rcp.Invoice = IHP_Ivc.Invoice
+                            )
+                        );
+            `;
+
+            const listCheck = await execute(queryListCheck);
+
+            for(const data of listCheck){
+                const queryCheckMaster = `  SELECT 
+                                                * 
+                                            FROM 
+                                                IHP_Inventory 
+                                            WHERE 
+                                                Inventory = '${data.Inventory}'`;
+                const resultCheck = await execute(queryCheckMaster);
+                if(resultCheck.length < 1){
+                    reject(`Item ${data.Nama} Tidak ada di master inventory`)
+                }
+            }
+        resolve(true)
         } catch (err) {
             reject(err)
         }
@@ -1544,5 +1723,6 @@ module.exports = {
     getCashSummaryDetail,
     getRoom,
     getIvc,
-    search
+    search,
+    cleanOkd
 }
