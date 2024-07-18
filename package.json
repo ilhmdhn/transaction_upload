@@ -1,7 +1,7 @@
 {
   "name": "transaction_upload",
   "version": "1.0.0",
-  "description": "",
+  "description": "Happy Puppy Upload Transaction Program",
   "main": "main.js",
   "scripts": {
     "dist": "electron-builder --ia32 --win=portable",

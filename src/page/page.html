@@ -707,6 +707,7 @@
         const tfOutlet = document.getElementById('tf_outlet').value;
 
         ipcRenderer.send('SAVE-OUTLET', tfOutlet);
+        success_alert('Restart Program', 'Untuk menyimpan perubahan agar melakukan restart program');
     }
 
     const svNor = () => {
@@ -721,6 +722,7 @@
             pass: passNormal.value,
             db: dbNormal.value
         });
+        success_alert('Restart Program', 'Untuk menyimpan perubahan agar melakukan restart program');
     }
 
     const svTax = () => {
@@ -734,12 +736,18 @@
             pass: passTax.value,
             db: dbTax.value
         });
+        success_alert('Restart Program', 'Untuk menyimpan perubahan agar melakukan restart program');
     }
 
     const upPos = async () => {
         const normalState = document.getElementById("type1").checked;
         const taxState = document.getElementById("type2").checked;
         const datePick = document.getElementById('tanggal');
+
+        if(!normalState && !taxState){
+            failed_alert('Gagal', 'Database belum dipilih')
+            return
+        }
 
         ipcRenderer.send('UPLOAD-POS', {
             date: `${datePick.value}`,

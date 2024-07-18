@@ -62,7 +62,6 @@
             message: messageUpload
           })
         } catch (err) {
-          console.log(err)
           reject(err);
         }
     });
@@ -177,7 +176,13 @@
     }
 
     const cashSummaryData = await getCashSummaryDetail(date);
-    if(cashSummaryData.length >0){
+    let summaryState = false;
+    cashSummaryData.forEach((element)=>{
+      if(element){
+        summaryState = true;
+      }
+    })
+    if(cashSummaryData.length >0 && summaryState){
         const cashSummaryXml = generateDynamicXML(cashSummaryData);
         saveXMLToFile('C:/upload_transaction/pos/normal', `PIHP_Cash_Summary_Detail_${getDate}.xml`, cashSummaryXml);
     }

@@ -2,7 +2,6 @@ const { ipcMain, Tray, Menu, app, BrowserWindow } = require('electron');
 const path = require('path');
 const { uploadPos } = require('./src/data/generate_file');
 const {setDbNormal, getDbNormal, setDbTax, getDbTax, setOutlet, getOutlet} = require('./src/data/preferences');
-const db = require('./src/tools/db');
 const { default: axios } = require('axios');
 const config = require('./src/data/config');
 
@@ -43,9 +42,27 @@ const createWindow = () =>{
 
     const iconTray = path.join(__dirname, 'icon.png');
     const tray = new Tray(iconTray);
+    tray.on('click', () => {
+        if (win.isVisible()) {
+            win.hide();
+        } else {
+            win.show();
+        }
+    });
+    const contextMenu = Menu.buildFromTemplate([
+        {
+            label: 'Quit',
+            click: () => {
+                app.isQuiting = true;
+                app.quit();
+                win.close();
+                app.exit();
+                return
+            }
+        }
+    ]);
 
-    
-
+    tray.setContextMenu(contextMenu);
     
     
     win.webContents.on('did-finish-load', async () => {
@@ -146,7 +163,7 @@ const createWindow = () =>{
                 });
             }   
         } catch (err) {
-            console.log(err)
+            showErrorAlert(err, err.message)
         }
     }
 
