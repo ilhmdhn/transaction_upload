@@ -243,7 +243,7 @@
           const userXml = generateDynamicXML(userData);
           saveXMLToFile('C:/upload_transaction/pos/tax', `CIHP_User_${getDate}.xml`, userXml);
       }
-      
+
       const memberData = await getMemberTax(date);
       if(memberData.length >0){
           const memberXml = generateDynamicXML(memberData);

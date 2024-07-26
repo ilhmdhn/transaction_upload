@@ -382,11 +382,12 @@ const getMember = (date) => {
                     WHEN EMAIL = ' - ' THEN ''
                     ELSE REPLACE(REPLACE(EMAIL, CHAR(9), ''), ' ', '')
                     END AS EMAIL,
-                    CASE 
-                    WHEN BirthDay = '1900-01-01 12:00:00' THEN (CONVERT(VARCHAR(10), CAST('01/01/1900' AS datetime), 103))
-                    WHEN BirthDay = '1900-01-01 00:00:00' THEN (CONVERT(VARCHAR(10), CAST('01/01/1900' AS datetime), 103))
-                    ELSE (CONVERT(VARCHAR(10), ISNULL(BirthDay, '01/01/1900'), 103))
-                    END AS BirthDay
+--                        CASE
+  --                      WHEN BirthDay = '1900-01-01 12:00:00' THEN CONVERT(VARCHAR(19), CONVERT(DATETIME, '1999-01-01 12:00:00', 120), 120)
+    --                    WHEN BirthDay = '1900-01-01 00:00:00' THEN CONVERT(VARCHAR(19), CONVERT(DATETIME, '1999-01-01 12:00:00', 120), 120)
+      --                  WHEN LEN(BirthDay) = 10 THEN CONVERT(VARCHAR(19), CONVERT(DATETIME, BirthDay, 103), 120)
+        --            ELSE CONVERT(VARCHAR(19), CONVERT(DATETIME, BirthDay, 103), 120) END 
+                '1999-01-01 00:00:00' AS BirthDay
                 FROM IHP_Mbr
                 WHERE 
 --                    CONVERT(CHAR(10), convert(datetime,CHTime), 120) =  '${date}'
