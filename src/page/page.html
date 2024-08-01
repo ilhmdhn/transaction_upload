@@ -839,7 +839,6 @@
         const taHistory = document.getElementById('log_history');
         taHistory.innerHTML = '';
         data.forEach(element => {
-            console.log(element)
             const previous = taHistory.innerHTML;
             const newText = `${previous ? (previous + '\n') : ''}${element}`
             taHistory.innerHTML = newText;

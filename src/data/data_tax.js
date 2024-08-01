@@ -1502,7 +1502,7 @@ const getIvcTax = (date) => {
         `;
         
         const result = await execute(query);
-        
+        console.log('TAX\n'+JSON.stringify(result[0]));
         resolve(result);
 
         } catch (err) {

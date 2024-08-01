@@ -225,94 +225,94 @@
   
       await cekSummaryCashBalanceTax(date);
   
-      const inventoryData = await getInventoryTax(date);
-      if(inventoryData.length >0){
-          const inventoryXml = generateDynamicXML(inventoryData);
+      const inventoryDataTax = await getInventoryTax(date);
+      if(inventoryDataTax.length >0){
+          const inventoryXml = generateDynamicXML(inventoryDataTax);
           saveXMLToFile('C:/upload_transaction/pos/tax', `AIHP_Inventory_${getDate}.xml`, inventoryXml);
       }
       
-      const roomTypeData = await getRoomTypeTax(date);
-      if(roomTypeData.length >0){
-          const roomTypeXml = generateDynamicXML(roomTypeData);
+      const roomTypeDataTax = await getRoomTypeTax(date);
+      if(roomTypeDataTax.length >0){
+          const roomTypeXml = generateDynamicXML(roomTypeDataTax);
           saveXMLToFile('C:/upload_transaction/pos/tax', `BIHP_Jenis_Kamar_${getDate}.xml`, roomTypeXml);
       }
       
       
-      const userData = await getUserTax();
-      if(userData.length >0){
-          const userXml = generateDynamicXML(userData);
+      const userDataTax = await getUserTax();
+      if(userDataTax.length >0){
+          const userXml = generateDynamicXML(userDataTax);
           saveXMLToFile('C:/upload_transaction/pos/tax', `CIHP_User_${getDate}.xml`, userXml);
       }
 
-      const memberData = await getMemberTax(date);
-      if(memberData.length >0){
-          const memberXml = generateDynamicXML(memberData);
+      const memberDataTax = await getMemberTax(date);
+      if(memberDataTax.length >0){
+          const memberXml = generateDynamicXML(memberDataTax);
           saveXMLToFile('C:/upload_transaction/pos/tax', `DIHP_Mbr_${getDate}.xml`, memberXml);
       }
   
-      const reservationData = await getReservationTax(date);
-      if(reservationData.length >0){
-          const reservationXml = generateDynamicXML(reservationData);
+      const reservationDataTax = await getReservationTax(date);
+      if(reservationDataTax.length >0){
+          const reservationXml = generateDynamicXML(reservationDataTax);
           saveXMLToFile('C:/upload_transaction/pos/tax', `EIHP_Rsv_${getDate}.xml`, reservationXml);
       }
   
-      const rcpData = await getRcpTax(date);
-      if(rcpData.length >0){
-          const rcpXml = generateDynamicXML(rcpData);
+      const rcpDataTax = await getRcpTax(date);
+      if(rcpDataTax.length >0){
+          const rcpXml = generateDynamicXML(rcpDataTax);
           saveXMLToFile('C:/upload_transaction/pos/tax', `FIHP_Rcp_${getDate}.xml`, rcpXml);
       }
   
-      const oklData = await getOklTax(date);
-      if(oklData.length >0){
-          const oklXml = generateDynamicXML(oklData);
+      const oklDataTax = await getOklTax(date);
+      if(oklDataTax.length >0){
+          const oklXml = generateDynamicXML(oklDataTax);
           saveXMLToFile('C:/upload_transaction/pos/tax', `GIHP_Okl_${getDate}.xml`, oklXml);
       }
   
-      const okdData = await getOkdTax(date);
-      if(okdData.length >0){
-          const okdXml = generateDynamicXML(okdData);
+      const okdDataTax = await getOkdTax(date);
+      if(okdDataTax.length >0){
+          const okdXml = generateDynamicXML(okdDataTax);
           saveXMLToFile('C:/upload_transaction/pos/tax', `HIHP_Okd_${getDate}.xml`, okdXml);
       }
       
-      const okdPromoData = await getOkdPromoTax(date);
-      if(okdPromoData.length >0){
-          const okdPromoXml = generateDynamicXML(okdPromoData);
+      const okdPromoDataTax = await getOkdPromoTax(date);
+      if(okdPromoDataTax.length >0){
+          const okdPromoXml = generateDynamicXML(okdPromoDataTax);
           saveXMLToFile('C:/upload_transaction/pos/tax', `IIHP_Okd_Promo_${getDate}.xml`, okdPromoXml);
       }
   
-      const oclData = await getOclTax(date);
-      if(oclData.length >0){
-          const oclXml = generateDynamicXML(oclData);
+      const oclDataTax = await getOclTax(date);
+      if(oclDataTax.length >0){
+          const oclXml = generateDynamicXML(oclDataTax);
           saveXMLToFile('C:/upload_transaction/pos/tax', `JIHP_Ocl_${getDate}.xml`, oclXml);
       }
   
-      const ocdData = await getOcdTax(date);
-      if(ocdData.length >0){
-          const ocdXml = generateDynamicXML(ocdData);
+      const ocdDataTax = await getOcdTax(date);
+      if(ocdDataTax.length >0){
+          const ocdXml = generateDynamicXML(ocdDataTax);
           saveXMLToFile('C:/upload_transaction/pos/tax', `KIHP_Ocd_${getDate}.xml`, ocdXml);
       }
   
-      const ocdPromoData = await getOcdPromoTax(date);
-      if(ocdPromoData.length >0){
-          const ocdPromoXml = generateDynamicXML(ocdPromoData);
+      const ocdPromoDataTax = await getOcdPromoTax(date);
+      if(ocdPromoDataTax.length >0){
+          const ocdPromoXml = generateDynamicXML(ocdPromoDataTax);
           saveXMLToFile('C:/upload_transaction/pos/tax', `LIHP_Ocd_Promo_${getDate}.xml`, ocdPromoXml);
       }
   
-      const sulData = await getSulTax(date);
-      if(sulData.length >0){
-          const sulXml = generateDynamicXML(sulData);
+      const sulDataTax = await getSulTax(date);
+      if(sulDataTax.length >0){
+          const sulXml = generateDynamicXML(sulDataTax);
           saveXMLToFile('C:/upload_transaction/pos/tax', `MIHP_Sul_${getDate}.xml`, sulXml);
       }
   
-      const sudData = await getSudTax(date);
-      if(sudData.length >0){
-          const sudXml = generateDynamicXML(sudData);
+      const sudDataTax = await getSudTax(date);
+      if(sudDataTax.length >0){
+          const sudXml = generateDynamicXML(sudDataTax);
           saveXMLToFile('C:/upload_transaction/pos/tax', `NIHP_Sud_${getDate}.xml`, sudXml);
       }
   
-      const detailPromoData = await getDetailPromoTax(date);
-      if(detailPromoData.length >0){
-          const detailPromoXml = generateDynamicXML(detailPromoData);
+      const detailPromoDataTax = await getDetailPromoTax(date);
+      if(detailPromoDataTax.length >0){
+          const detailPromoXml = generateDynamicXML(detailPromoDataTax);
           saveXMLToFile('C:/upload_transaction/pos/tax', `OIHP_Detail_Promo_${getDate}.xml`, detailPromoXml);
       }
   /*
@@ -322,15 +322,15 @@
           saveXMLToFile('C:/upload_transaction/pos/tax', `PIHP_Cash_Summary_Detail_${getDate}.xml`, cashSummaryXml);
       }
 */
-      const roomData = await getRoomTax(date);
-      if(roomData.length >0){
-          const roomXml = generateDynamicXML(roomData);
+      const roomDataTax = await getRoomTax(date);
+      if(roomDataTax.length >0){
+          const roomXml = generateDynamicXML(roomDataTax);
           saveXMLToFile('C:/upload_transaction/pos/tax', `PIHP_Room_${getDate}.xml`, roomXml);
       }
 
-      const ivcData = await getIvcTax(date);
-      if(ivcData.length >0){
-          const ivcyXml = generateDynamicXML(ivcData);
+      const ivcDataTax = await getIvcTax(date);
+      if(ivcDataTax.length >0){
+          const ivcyXml = generateDynamicXML(ivcDataTax);
           saveXMLToFile('C:/upload_transaction/pos/tax', `QIHP_Ivc_${getDate}.xml`, ivcyXml);
       }
   
@@ -399,8 +399,8 @@
         const filePath = path.join(directory, file);
         fs.unlink(filePath, err => {
           if (err) {
-            reject(err)
             console.error(`Error deleting file ${filePath}: ${err}`);
+            throw `Error deleting file ${filePath}: ${err}`
           } else {
           }
         });

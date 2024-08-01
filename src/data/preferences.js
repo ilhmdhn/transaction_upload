@@ -47,12 +47,14 @@ const getDbTax = () =>{
     const user = newStore.get('user_tax');
     const pass = newStore.get('pass_tax');
     const db= newStore.get('db_tax');
+    
     return {
         ip: ip,
         user: user,
         pass: pass,
         db: db,
     }
+
 }
 
 module.exports = {
