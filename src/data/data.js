@@ -1683,7 +1683,6 @@ const getIvc = (date) => {
         `;
         
         const result = await execute(query);
-        console.log('NORMAL\n'+JSON.stringify(result[0]));
         
         resolve(result);
 
