@@ -28,6 +28,7 @@ function getFilePathsFromDirectory(directory) {
     
         form.append('outlet', outlet);
         form.append('type', type);
+        form.append('version', '240801');
     
         const response = await axios.post(uploadUrl, form, {
           headers: {

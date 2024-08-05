@@ -68,7 +68,7 @@ const cekSummaryCashBalance = (date) =>{
                 WHERE 
                     SUL.Summary = SUD.Summary 
                 AND 
-                    id_payment = '0' 
+                    id_payment = '0'
                 AND 
                     CONVERT(CHAR(10), SUL.Date_Trans, 120) = '${date}'
             `;
@@ -88,13 +88,11 @@ const cekSummaryCashBalance = (date) =>{
                 AND 
                     status = 1 
                 AND 
-                    ID_Payment = 0 
+                    ID_Payment = 6
                 AND 
                     Reservation NOT IN (SELECT Reservation FROM IHP_Rcp)
             `;
-
             const dpCashTemp = await execute(dpCashQuery);
-
             const cashDpTotal = dpCashTemp[0].Uang_Muka;
 
             const dpCashCancelQuery = `
@@ -149,8 +147,10 @@ const cekSummaryCashBalance = (date) =>{
                             +   (element.Dua_Puluh_Lima  *      25);
             });
 
+
+
             const totalCash = cashPaymentTotal + cashDpTotal + cashDpCancel;
-            
+            console.log(`totalCash: ${totalCash}  jumlahCash:${jumlahCash}`)
             if(totalCash == 0){
                 resolve(true);
             }else if(totalCash > jumlahCash){
@@ -159,7 +159,7 @@ const cekSummaryCashBalance = (date) =>{
                 resolve(true);
             }else if(totalCash < jumlahCash){
                 if((jumlahCash - totalCash) > 2000){
-                    reject('Detail pecahan di FO kurang');
+                    reject('Detail pecahan di Front Office kurang');
                 }
                 else if((jumlahCash - totalCash) <= 2000){
                     resolve(true);
@@ -1330,6 +1330,7 @@ const getSud = (date) => {
                     resultUM.forEach((element)=>{
                         if(element.RCPID_Payment == 0){
                             UmList.push({
+                                Summary: sud.Summary,
                                 ID_Payment: element.RCPID_Payment,
                                 Member: element.RCPMember,
                                 Input1: '',
