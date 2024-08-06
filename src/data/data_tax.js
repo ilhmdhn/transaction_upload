@@ -77,6 +77,23 @@ const cekSummaryCashBalanceTax = (date) =>{
             
             const cashPaymentTotal = paymentCashTemp[0].Pay_Value;
 
+            const cekDpCashRcp = `
+                SELECT 
+                    SUM(isnull(Uang_Muka,0)) as value
+                FROM 
+                    IHP_Rcp 
+                WHERE 
+                    Uang_Muka > 0 
+                AND 
+                    Reception not in (SELECT Reception FROM IHP_UangMukaNonCash)
+                AND
+                    CONVERT(CHAR(10), Date_Trans, 120) = '${date}'
+            `;
+
+            const dpCashRcpTemp = await execute(cekDpCashRcp);
+            const dpCashTotal = dpCashRcpTemp[0].value;
+
+
             let dpCashQuery = `
                 SET dateformat dmy;
                 SELECT 
@@ -149,7 +166,7 @@ const cekSummaryCashBalanceTax = (date) =>{
                             +   (element.Dua_Puluh_Lima  *      25);
             });
 
-            const totalCash = cashPaymentTotal + cashDpTotal + cashDpCancel;
+            const totalCash = cashPaymentTotal + cashDpTotal + cashDpCancel + dpCashTotal;
             
             if(totalCash == 0){
                 resolve(true);

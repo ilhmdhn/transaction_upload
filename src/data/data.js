@@ -57,7 +57,7 @@ const cekSummaryCashBalance = (date) =>{
     return new Promise(async(resolve, reject)=>{
         try {
             let jumlahCash = 0;
-
+            
             let cekCashPayment = `
                 set dateformat DMY;
                 SELECT 
@@ -74,8 +74,24 @@ const cekSummaryCashBalance = (date) =>{
             `;
             
             const paymentCashTemp = await execute(cekCashPayment);
-            
+
             const cashPaymentTotal = paymentCashTemp[0].Pay_Value;
+            
+            const cekDpCashRcp = `
+                SELECT 
+	                SUM(isnull(Uang_Muka,0)) as value
+                FROM 
+	                IHP_Rcp 
+                WHERE 
+	                Uang_Muka > 0 
+                AND 
+	                Reception not in (SELECT Reception FROM IHP_UangMukaNonCash)
+                AND
+	                CONVERT(CHAR(10), Date_Trans, 120) = '${date}'
+            `;
+
+            const dpCashRcpTemp = await execute(cekDpCashRcp);
+            const dpCashTotal = dpCashRcpTemp[0].value;
 
             let dpCashQuery = `
                 SET dateformat dmy;
@@ -149,7 +165,8 @@ const cekSummaryCashBalance = (date) =>{
 
 
 
-            const totalCash = cashPaymentTotal + cashDpTotal + cashDpCancel;
+            const totalCash = cashPaymentTotal + cashDpTotal + cashDpCancel + dpCashTotal;
+            console.log(`nganu cashPaymentTotal:${cashPaymentTotal}  cashDpTotal:${cashDpTotal}  cashDpCancel:${cashDpCancel}`)
             console.log(`totalCash: ${totalCash}  jumlahCash:${jumlahCash}`)
             if(totalCash == 0){
                 resolve(true);
