@@ -3,8 +3,8 @@ const encrypt = require('../tools/encrypt');
 const decrypt = require('../tools/decrypt');
 const moment = require('moment');
 
-const getTotalPayTax = (date) =>{
-    return new Promise(async(resolve, reject)=>{
+const getTotalPayTax = (date) => {
+    return new Promise(async (resolve, reject) => {
         try {
             const query = `
             SET DATEFORMAT DMY
@@ -28,8 +28,8 @@ const getTotalPayTax = (date) =>{
 }
 
 
-const getTotalInvoiceTax = (date) =>{
-    return new Promise(async(resolve, reject)=>{
+const getTotalInvoiceTax = (date) => {
+    return new Promise(async (resolve, reject) => {
         try {
             let query = `
             SET DATEFORMAT DMY;
@@ -42,7 +42,7 @@ const getTotalInvoiceTax = (date) =>{
             WHERE 
                 CONVERT(CHAR(10), DATE_TRANS, 120) = '${date}'
           `;
-          
+
 
             const result = await execute(query);
             resolve(result[0]);
@@ -53,8 +53,8 @@ const getTotalInvoiceTax = (date) =>{
     });
 }
 
-const cekSummaryCashBalanceTax = (date) =>{
-    return new Promise(async(resolve, reject)=>{
+const cekSummaryCashBalanceTax = (date) => {
+    return new Promise(async (resolve, reject) => {
         try {
             let jumlahCash = 0;
 
@@ -72,22 +72,32 @@ const cekSummaryCashBalanceTax = (date) =>{
                 AND 
                     CONVERT(CHAR(10), SUL.Date_Trans, 120) = '${date}'
             `;
-            
+
             const paymentCashTemp = await execute(cekCashPayment);
-            
+
             const cashPaymentTotal = paymentCashTemp[0].Pay_Value;
 
             const cekDpCashRcp = `
-                SELECT 
-                    SUM(isnull(Uang_Muka,0)) as value
-                FROM 
-                    IHP_Rcp 
-                WHERE 
-                    Uang_Muka > 0 
-                AND 
-                    Reception not in (SELECT Reception FROM IHP_UangMukaNonCash)
+                SELECT
+	                SUM(isnull(rcp.Uang_Muka,0)) as value
+                FROM
+	                IHP_Rcp rcp
+                JOIN
+                    IHP_Sud sud
+                ON
+                    sud.Summary = rcp.Summary
                 AND
-                    CONVERT(CHAR(10), Date_Trans, 120) = '${date}'
+                    sud.Pay_Value = rcp.Uang_Muka
+                WHERE
+	                rcp.Uang_Muka > 0
+                AND
+                    rcp.Id_Payment = 0
+                AND
+                    sud.ID_Payment = 6
+                AND
+	                Reception not in (SELECT Reception FROM IHP_UangMukaNonCash)
+                AND
+	                CONVERT(CHAR(10), Date_Trans, 120) = '${date}'
             `;
 
             const dpCashRcpTemp = await execute(cekDpCashRcp);
@@ -129,9 +139,9 @@ const cekSummaryCashBalanceTax = (date) =>{
             `;
 
             const dpCashCancelTemp = await execute(dpCashCancelQuery);
-            
+
             const cashDpCancel = dpCashCancelTemp[0].Cash_Rsv;
-            
+
             const formattedDate = moment(date).format('DD/MM/YYYY');
             let query = `
                 SELECT 
@@ -143,42 +153,42 @@ const cekSummaryCashBalanceTax = (date) =>{
                 AND 
                     Status = '0'
             `;
-            
+
             const summaryCheck = await execute(query);
-            
-            if(summaryCheck.length < 1){
+
+            if (summaryCheck.length < 1) {
                 resolve(0);
                 return;
             }
-            
-            summaryCheck.forEach((element)=>{
-                jumlahCash +=   (element.Seratus_Ribu    *  100000)
-                            +   (element.Lima_Puluh_Ribu *   50000)
-                            +   (element.Dua_Puluh_Ribu  *   20000)
-                            +   (element.Sepuluh_Ribu    *   10000)
-                            +   (element.Lima_Ribu       *    5000)
-                            +   (element.Dua_Ribu        *    2000)
-                            +   (element.Seribu          *    1000)
-                            +   (element.Lima_Ratus      *     500)
-                            +   (element.Dua_Ratus       *     200)
-                            +   (element.Seratus         *     100)
-                            +   (element.Lima_Puluh      *      50)
-                            +   (element.Dua_Puluh_Lima  *      25);
+
+            summaryCheck.forEach((element) => {
+                jumlahCash += (element.Seratus_Ribu * 100000)
+                    + (element.Lima_Puluh_Ribu * 50000)
+                    + (element.Dua_Puluh_Ribu * 20000)
+                    + (element.Sepuluh_Ribu * 10000)
+                    + (element.Lima_Ribu * 5000)
+                    + (element.Dua_Ribu * 2000)
+                    + (element.Seribu * 1000)
+                    + (element.Lima_Ratus * 500)
+                    + (element.Dua_Ratus * 200)
+                    + (element.Seratus * 100)
+                    + (element.Lima_Puluh * 50)
+                    + (element.Dua_Puluh_Lima * 25);
             });
 
             const totalCash = cashPaymentTotal + cashDpTotal + cashDpCancel + dpCashTotal;
-            
-            if(totalCash == 0){
+
+            if (totalCash == 0) {
                 resolve(true);
-            }else if(totalCash > jumlahCash){
+            } else if (totalCash > jumlahCash) {
                 reject('Detail pecahan di FO kurang ');
-            }else if(totalCash == jumlahCash){
+            } else if (totalCash == jumlahCash) {
                 resolve(true);
-            }else if(totalCash < jumlahCash){
-                if((jumlahCash - totalCash) > 2000){
+            } else if (totalCash < jumlahCash) {
+                if ((jumlahCash - totalCash) > 2000) {
                     reject('Detail pecahan di FO kurang');
                 }
-                else if((jumlahCash - totalCash) <= 2000){
+                else if ((jumlahCash - totalCash) <= 2000) {
                     resolve(true);
                 }
             }
@@ -247,15 +257,15 @@ const getInventoryTax = (date) => {
             const listInventory = [];
             const dataCount = await execute(queryCheck);
 
-            if(dataCount[0].count < 1){
+            if (dataCount[0].count < 1) {
                 resolve([]);
                 return;
             }
-            
+
             const dataInventory = await execute(queryData);
 
-            dataInventory.forEach((element)=>{
-                if(element.Inventory == ''){
+            dataInventory.forEach((element) => {
+                if (element.Inventory == '') {
                     reject(`Item ${element.Nama} Tidak ada ID Global`)
                 }
                 listInventory.push({
@@ -272,7 +282,7 @@ const getInventoryTax = (date) => {
     })
 }
 
-const getRoomTypeTax = (date) =>{
+const getRoomTypeTax = (date) => {
     return new Promise(async (resolve, reject) => {
         try {
 
@@ -308,17 +318,17 @@ const getRoomTypeTax = (date) =>{
                     CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) <  '${moment(date).add(1, 'days').format('YYYY-MM-DD') + ' 06:00:00'}'
                 `;
 
-        const dataCount = await execute(query);
+            const dataCount = await execute(query);
 
-        if(dataCount[0].count < 1){
+            if (dataCount[0].count < 1) {
                 resolve([]);
                 return;
-        }
+            }
             const dataRoomType = await execute(queryData);
 
             const result = [];
 
-            dataRoomType.forEach((element)=>{
+            dataRoomType.forEach((element) => {
                 result.push({
                     Nama_Kamar: element.Nama_Kamar,
                     Hari: element.Hari,
@@ -326,7 +336,7 @@ const getRoomTypeTax = (date) =>{
                     Time_Finish: element.Time_Finish,
                     Overpax: element.Overpax,
                     Tarif: element.Tarif,
-                    CHTime: element.CHTimeTgl + ' ' +element.CHTimeJam,
+                    CHTime: element.CHTimeTgl + ' ' + element.CHTimeJam,
                     Chusr: element.Chusr,
                 });
             })
@@ -360,9 +370,9 @@ const getUserTax = () => {
             let userList = [];
             dataUser.forEach(element => {
                 const decryptedName = encrypt(element.User_ID);
-                if(regex.test(decryptedName)){
-                    userList.push({User_ID: decryptedName});
-                }else{
+                if (regex.test(decryptedName)) {
+                    userList.push({ User_ID: decryptedName });
+                } else {
                     // throw `USER POS HARUS MENGGUNAKAN HURUF KAPITAL ${element.User_ID} / ${decryptedName}`
                 }
             });
@@ -433,7 +443,7 @@ const getMemberTax = (date) => {
     })
 }
 
-const getReservationTax = (date) =>{
+const getReservationTax = (date) => {
     return new Promise(async (resolve, reject) => {
         try {
             const query = `
@@ -548,7 +558,7 @@ const getOklTax = (date) => {
 
             const result = await execute(query);
             resolve(result);
-            
+
         } catch (err) {
             reject(err)
         }
@@ -590,7 +600,7 @@ const getOkdTax = (date) => {
             const item = [];
             const result = await execute(query);
 
-            result.forEach((element)=>{
+            result.forEach((element) => {
                 item.push(
                     {
                         OrderPenjualan: element.OrderPenjualan,
@@ -603,7 +613,7 @@ const getOkdTax = (date) => {
                     }
                 )
             });
-            resolve(item);            
+            resolve(item);
         } catch (err) {
             reject(err)
         }
@@ -665,14 +675,14 @@ const getOkdPromoTax = (date) => {
                 `;
 
             const resultCheck = await execute(queryCheck);
-            if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
+            if (!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1) {
                 resolve([])
             }
-            
+
             const result = await execute(query);
 
             resolve(result);
-            
+
         } catch (err) {
             reject(err)
         }
@@ -724,14 +734,14 @@ const getOclTax = (date) => {
                 `;
 
             const resultCheck = await execute(queryCheck);
-            if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
+            if (!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1) {
                 resolve([])
             }
-            
+
             const result = await execute(query);
 
             resolve(result);
-            
+
         } catch (err) {
             reject(err)
         }
@@ -796,14 +806,14 @@ const getOcdTax = (date) => {
                 `;
 
             const resultCheck = await execute(queryCheck);
-            if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
+            if (!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1) {
                 resolve([])
             }
-            
+
             const result = await execute(query);
 
             resolve(result);
-            
+
         } catch (err) {
             reject(err)
         }
@@ -866,16 +876,16 @@ const getOcdPromoTax = (date) => {
   ORDER BY 
     a.OrderCancelation, Inventory ASC;
                 `;
-        const resultCheck = await execute(queryCheck);
+            const resultCheck = await execute(queryCheck);
 
-        if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
-            resolve([])
-        }
-        
-        const result = await execute(query);
-        
-        resolve(result);
-            
+            if (!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1) {
+                resolve([])
+            }
+
+            const result = await execute(query);
+
+            resolve(result);
+
         } catch (err) {
             reject(err)
         }
@@ -926,15 +936,15 @@ const getSulTax = (date) => {
             ORDER BY 
                 Summary ASC;
                 `;
-        const resultCheck = await execute(queryCheck);
-        if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
-            resolve([])
-        }
-        
-        const result = await execute(query);
-        
-        resolve(result);
-            
+            const resultCheck = await execute(queryCheck);
+            if (!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1) {
+                resolve([])
+            }
+
+            const result = await execute(query);
+
+            resolve(result);
+
         } catch (err) {
             reject(err)
         }
@@ -966,8 +976,8 @@ const getSudTax = (date) => {
             `;
 
             const zeroCashResult = await execute(checkZeroCash);
-            if(zeroCashResult.length>0){
-                for(const cash of zeroCashResult){
+            if (zeroCashResult.length > 0) {
+                for (const cash of zeroCashResult) {
                     let deleteQuery = `
                         DELETE FROM IHP_SUD 
                         WHERE 
@@ -978,7 +988,7 @@ const getSudTax = (date) => {
                             SUMMARY = '${cash.SUMMARY}'
                   `;
 
-                  await execute(deleteQuery);
+                    await execute(deleteQuery);
                 }
             }
 
@@ -1003,9 +1013,9 @@ const getSudTax = (date) => {
                     )
             `;
             const zeroDebitResult = await execute(checkZeroDebit);
-            
-            if(zeroDebitResult.length>0){
-                for(const cash of zeroDebitResult){
+
+            if (zeroDebitResult.length > 0) {
+                for (const cash of zeroDebitResult) {
                     let deleteQuery = `
                         DELETE FROM IHP_SUD 
                         WHERE 
@@ -1016,7 +1026,7 @@ const getSudTax = (date) => {
                             SUMMARY = '${cash.SUMMARY}'
                   `;
 
-                  await execute(deleteQuery);
+                    await execute(deleteQuery);
                 }
             }
             const checkZeroCredit = `
@@ -1041,8 +1051,8 @@ const getSudTax = (date) => {
             `;
 
             const zeroCreditResult = await execute(checkZeroCredit);
-            if(zeroCreditResult.length>0){
-                for(const cash of zeroCreditResult){
+            if (zeroCreditResult.length > 0) {
+                for (const cash of zeroCreditResult) {
                     let deleteQuery = `
                         DELETE FROM IHP_SUD 
                         WHERE 
@@ -1053,7 +1063,7 @@ const getSudTax = (date) => {
                             SUMMARY = '${cash.SUMMARY}'
                   `;
 
-                  await execute(deleteQuery);
+                    await execute(deleteQuery);
                 }
             }
 
@@ -1126,17 +1136,17 @@ const getSudTax = (date) => {
                             ID_Payment 
                             ASC
                 `;
-        const resultCheck = await execute(queryCheck);
-        if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
-            resolve([])
-        }
-        
-        const result = await execute(query);
-        const listSud = [];
-        for(const sud of result){
+            const resultCheck = await execute(queryCheck);
+            if (!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1) {
+                resolve([])
+            }
 
-            if(sud.ID_Payment == 6){
-                let queryUM = `
+            const result = await execute(query);
+            const listSud = [];
+            for (const sud of result) {
+
+                if (sud.ID_Payment == 6) {
+                    let queryUM = `
                     SELECT 
                         RCP.ID_Payment AS RCPID_Payment,
                         RCP.Member AS RCPMember,
@@ -1158,47 +1168,47 @@ const getSudTax = (date) => {
                         AND SUL.Summary = '${sud.Summary}'
                 `;
 
-                const resultUM = await execute(queryUM);
-                
-                if(resultUM.length > 0){
-                    let UmList = [];
-    
-                    resultUM.forEach((element)=>{
-                        if(element.RCPID_Payment == 0){
-                            UmList.push({
-                                ID_Payment: element.RCPID_Payment,
-                                Member: element.RCPMember,
-                                Input1: '',
-                                Input2: '',
-                                Input3: '',
-                                Pay_Value: element.RCPPay_Value,
-                                Status: '0',
-                                EDC_Machine: '',
-                            })
-                        }else{
-                            UmList.push({
-                                Summary: sud.Summary,
-                                ID_Payment: element.RCPID_Payment,
-                                Member: element.UMMember,
-                                Input1: element.Input1,
-                                Input2: element.Input2,
-                                Input3: element.Input3,
-                                Pay_Value: element.Pay_Value,
-                                Status: '0',
-                                EDC_Machine: element.EDC_Machine,
-                            })
-                        }
-                    })
-                    UmList.forEach((element)=>{
-                        listSud.push(element)
-                    })
-                    // result.push(UmList);
+                    const resultUM = await execute(queryUM);
+
+                    if (resultUM.length > 0) {
+                        let UmList = [];
+
+                        resultUM.forEach((element) => {
+                            if (element.RCPID_Payment == 0) {
+                                UmList.push({
+                                    ID_Payment: element.RCPID_Payment,
+                                    Member: element.RCPMember,
+                                    Input1: '',
+                                    Input2: '',
+                                    Input3: '',
+                                    Pay_Value: element.RCPPay_Value,
+                                    Status: '0',
+                                    EDC_Machine: '',
+                                })
+                            } else {
+                                UmList.push({
+                                    Summary: sud.Summary,
+                                    ID_Payment: element.RCPID_Payment,
+                                    Member: element.UMMember,
+                                    Input1: element.Input1,
+                                    Input2: element.Input2,
+                                    Input3: element.Input3,
+                                    Pay_Value: element.Pay_Value,
+                                    Status: '0',
+                                    EDC_Machine: element.EDC_Machine,
+                                })
+                            }
+                        })
+                        UmList.forEach((element) => {
+                            listSud.push(element)
+                        })
+                        // result.push(UmList);
+                    }
+                } else {
+                    listSud.push(sud);
                 }
-            }else{
-                listSud.push(sud);
             }
-        }
-        resolve(listSud);
+            resolve(listSud);
         } catch (err) {
             reject(err)
         }
@@ -1245,13 +1255,13 @@ const getDetailPromoTax = (date) => {
                         AND Complete = '1'
                     );
             `;
-        const resultCheck = await execute(queryCheck);
-        if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
-            resolve([])
-        }
-        
-        const result = await execute(query);        
-        resolve(result);
+            const resultCheck = await execute(queryCheck);
+            if (!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1) {
+                resolve([])
+            }
+
+            const result = await execute(query);
+            resolve(result);
         } catch (err) {
             reject(err)
         }
@@ -1288,7 +1298,7 @@ const getCashSummaryDetailTax = (date) => {
                     Date, Shift;
                 `;
 
-                let result2 = `
+            let result2 = `
                 SET DATEFORMAT DMY;
                 SELECT 
                   SUBSTRING(Date, 1, 10) AS Date,
@@ -1314,19 +1324,19 @@ const getCashSummaryDetailTax = (date) => {
                   Date, Shift;
               `;
 
-        const result = [];
-        const resultSatu = await execute(result1);
-        const resultDua = await execute(result2);
-        
-        if(result1.length >0){
-            result.push(resultSatu[0]);
-        }
+            const result = [];
+            const resultSatu = await execute(result1);
+            const resultDua = await execute(result2);
 
-        if(result2.length >0){
-            result.push(resultDua[0]);
-        }
+            if (result1.length > 0) {
+                result.push(resultSatu[0]);
+            }
 
-        resolve(result);
+            if (result2.length > 0) {
+                result.push(resultDua[0]);
+            }
+
+            resolve(result);
 
         } catch (err) {
             reject(err)
@@ -1369,14 +1379,14 @@ CONVERT(VARCHAR, CAST(CHTime AS datetime), 120) <  '${moment(date).add(1, 'days'
                 ORDER BY 
                     Kamar ASC;
                 `;
-        const resultCheck = await execute(queryCheck);
-        if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
-            resolve([])
-        }
-        
-        const result = await execute(query);
-        
-        resolve(result);
+            const resultCheck = await execute(queryCheck);
+            if (!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1) {
+                resolve([])
+            }
+
+            const result = await execute(query);
+
+            resolve(result);
 
         } catch (err) {
             reject(err)
@@ -1408,19 +1418,19 @@ const getIvcTax = (date) => {
 
 
 
-        const resultChusrCheck = await execute(queryCheckChusr);
+            const resultChusrCheck = await execute(queryCheckChusr);
 
-        if(resultChusrCheck.length > 0){
-            for(const chusr of resultChusrCheck){
-                const queryCheckAvailableChusr = `select User_ID from IHP_USer where User_ID = ${decrypt(chusr.Chusr)}`;
-                const resultChusr = await execute(queryCheckAvailableChusr);
-                if(resultChusr.length < 0){
-                    reject('CHUSR GA VALID');
+            if (resultChusrCheck.length > 0) {
+                for (const chusr of resultChusrCheck) {
+                    const queryCheckAvailableChusr = `select User_ID from IHP_USer where User_ID = ${decrypt(chusr.Chusr)}`;
+                    const resultChusr = await execute(queryCheckAvailableChusr);
+                    if (resultChusr.length < 0) {
+                        reject('CHUSR GA VALID');
+                    }
                 }
             }
-        }
 
-        let queryCheckMember = `
+            let queryCheckMember = `
             SET DATEFORMAT DMY;
             SELECT 
                 member, Reception, Invoice 
@@ -1439,14 +1449,14 @@ const getIvcTax = (date) => {
                         AND Complete = '1'
                 );
             `;
-        
-        const resultMemberCheck = await execute(queryCheckMember);
 
-        if(resultMemberCheck.length > 0){
-            reject('ERROR Member Kosong RCP '+resultChusrCheck[0].Reception);
-        }
+            const resultMemberCheck = await execute(queryCheckMember);
 
-        let queryCheck = `
+            if (resultMemberCheck.length > 0) {
+                reject('ERROR Member Kosong RCP ' + resultChusrCheck[0].Reception);
+            }
+
+            let queryCheck = `
             SET DATEFORMAT DMY;
             SELECT 
                 COUNT(*) as Jumlah 
@@ -1464,13 +1474,13 @@ const getIvcTax = (date) => {
                         AND Complete = '1'
                 );
             `;
-        const resultCheck = await execute(queryCheck)
+            const resultCheck = await execute(queryCheck)
 
-        if(!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1){
-            resolve([])
-        }
+            if (!resultCheck[0].Jumlah || resultCheck[0].Jumlah < 1) {
+                resolve([])
+            }
 
-        const query = `
+            const query = `
             SET DATEFORMAT DMY;
             SELECT 
                 IHP_Ivc.Invoice,
@@ -1517,9 +1527,9 @@ const getIvcTax = (date) => {
             ORDER BY 
                 IHP_Ivc.Invoice ASC;
         `;
-        
-        const result = await execute(query);
-        resolve(result);
+
+            const result = await execute(query);
+            resolve(result);
 
         } catch (err) {
             reject(err)
@@ -1527,7 +1537,7 @@ const getIvcTax = (date) => {
     })
 }
 
-const searchTax = async() =>{
+const searchTax = async () => {
     try {
         const queryCheckAvailableChusr = `select User_ID from IHP_USer where User_ID = ${decrypt("Talitha")}`;
         const resultChusr = await execute(queryCheckAvailableChusr);
